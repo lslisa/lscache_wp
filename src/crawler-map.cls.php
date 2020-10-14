@@ -7,8 +7,7 @@
 namespace LiteSpeed;
 defined( 'WPINC' ) || exit;
 
-class Crawler_Map extends Instance
-{
+class Crawler_Map extends Instance {
 	const BM_MISS = 1;
 	const BM_HIT = 2;
 	const BM_BLACKLIST = 4;
@@ -17,6 +16,7 @@ class Crawler_Map extends Instance
 	private $_home_url; // Used to simplify urls
 	private $_tb;
 	private $__data;
+	private $_conf_map_timeout;
 
 	protected $_urls = array();
 
@@ -26,12 +26,12 @@ class Crawler_Map extends Instance
 	 * @since 1.1.0
 	 * @access protected
 	 */
-	protected function __construct()
-	{
+	protected function __construct() {
 		$this->_home_url = get_home_url();
 		$this->__data = Data::get_instance();
 		$this->_tb = $this->__data->tb( 'crawler' );
 		$this->_tb_blacklist = $this->__data->tb( 'crawler_blacklist' );
+		$this->_conf_map_timeout = Conf::val( Base::O_CRAWLER_MAP_TIMEOUT );
 	}
 
 	/**
@@ -40,8 +40,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function save_map_status( $list, $curr_crawler )
-	{
+	public function save_map_status( $list, $curr_crawler ) {
 		global $wpdb;
 		Utility::compatibility();
 
@@ -141,8 +140,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function blacklist_add( $id )
-	{
+	public function blacklist_add( $id ) {
 		global $wpdb;
 
 		$id = (int)$id;
@@ -181,8 +179,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function blacklist_del( $id )
-	{
+	public function blacklist_del( $id ) {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler_blacklist' ) ) {
@@ -204,8 +201,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function blacklist_empty()
-	{
+	public function blacklist_empty() {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler_blacklist' ) ) {
@@ -225,8 +221,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function list_blacklist( $limit = false, $offset = false )
-	{
+	public function list_blacklist( $limit = false, $offset = false ) {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler_blacklist' ) ) {
@@ -250,8 +245,7 @@ class Crawler_Map extends Instance
 	/**
 	 * Count blacklist
 	 */
-	public function count_blacklist()
-	{
+	public function count_blacklist() {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler_blacklist' ) ) {
@@ -268,8 +262,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function empty_map()
-	{
+	public function empty_map() {
 		Data::get_instance()->tb_del( 'crawler' );
 
 		$msg = __( 'Sitemap cleaned successfully', 'litespeed-cache' );
@@ -282,8 +275,7 @@ class Crawler_Map extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public function list_map( $limit, $offset = false )
-	{
+	public function list_map( $limit, $offset = false ) {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler' ) ) {
@@ -304,8 +296,7 @@ class Crawler_Map extends Instance
 	/**
 	 * Count sitemap
 	 */
-	public function count_map()
-	{
+	public function count_map() {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler' ) ) {
@@ -322,8 +313,7 @@ class Crawler_Map extends Instance
 	 * @since    1.1.0
 	 * @access public
 	 */
-	public function gen()
-	{
+	public function gen() {
 		$urls = $this->_gen();
 
 		$msg = sprintf( __( 'Sitemap created successfully: %d items', 'litespeed-cache' ), $urls );
@@ -336,8 +326,7 @@ class Crawler_Map extends Instance
 	 * @since    1.1.0
 	 * @access private
 	 */
-	private function _gen()
-	{
+	private function _gen() {
 		global $wpdb;
 
 		if ( ! $this->__data->tb_exist( 'crawler' ) ) {
@@ -436,8 +425,7 @@ class Crawler_Map extends Instance
 	 * @since 3.0
 	 * @access private
 	 */
-	private function _save( $data, $fields = 'url,res,reason' )
-	{
+	private function _save( $data, $fields = 'url,res,reason' ) {
 		global $wpdb;
 
 		if ( empty( $data ) ) {
@@ -459,13 +447,12 @@ class Crawler_Map extends Instance
 	 * @since    1.1.1
 	 * @access private
 	 */
-	private function _parse( $sitemap, $return_detail = true )
-	{
+	private function _parse( $sitemap, $return_detail = true ) {
 		/**
 		 * Read via wp func to avoid allow_url_fopen = off
 		 * @since  2.2.7
 		 */
-		$response = wp_remote_get( $sitemap, array( 'timeout' => 15 ) );
+		$response = wp_remote_get( $sitemap, array( 'timeout' => $this->_conf_map_timeout ) );
 		if ( is_wp_error( $response ) ) {
 			$error_message = $response->get_error_message();
 			Debug2::debug( '🐞🗺️ failed to read sitemap: ' . $error_message );
@@ -535,8 +522,7 @@ class Crawler_Map extends Instance
 	 * @since 1.1.0
 	 * @access private
 	 */
-	private function _build($blacklist = array())
-	{
+	private function _build($blacklist = array()) {
 		global $wpdb;
 
 		$show_pages = Conf::val( Base::O_CRAWLER_PAGES );

@@ -48,12 +48,12 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 
 			<h3>
 				<?php if ( $closest_server ) : ?>
-					<a href="<?php echo Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_REDETECT_CLOUD, false, null, array( 'svc' => Cloud::SVC_IMG_OPTM ) ) ; ?>" class="litespeed-info-button" data-balloon-pos="right" data-balloon-break aria-label="<?php echo sprintf( __( 'Current closest Cloud server is %s.&#10; Click to redetect.', 'litespeed-cache' ), $closest_server ) ; ?>" data-litespeed-cfm="<?php echo __( 'Are you sure to redetect the closest cloud server for this service?', 'litespeed-cache' ) ; ?>"><span class="litespeed-quic-icon"></span></a>
+					<a href="<?php echo Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_REDETECT_CLOUD, false, null, array( 'svc' => Cloud::SVC_IMG_OPTM ) ) ; ?>" class="litespeed-info-button" data-balloon-pos="right" data-balloon-break aria-label="<?php echo sprintf( __( 'Current closest Cloud server is %s.&#10; Click to redetect.', 'litespeed-cache' ), $closest_server ) ; ?>" data-litespeed-cfm="<?php echo __( 'Are you sure you want to redetect the closest cloud server for this service?', 'litespeed-cache' ) ; ?>"><span class="litespeed-quic-icon"></span></a>
 				<?php else : ?>
 					<span class="litespeed-quic-icon"></span>
 				<?php endif ; ?>
-				<?php echo __('Optimize images with our cloud server', 'litespeed-cache' );?>
-				<a href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:image-optimization#image_optimization_in_litespeed_cache_for_wordpress" target="_blank" class="litespeed-right litespeed-learn-more"><?php echo __('Learn More', 'litespeed-cache') ; ?></a>
+				<?php echo __('Optimize images with our QUIC.cloud server', 'litespeed-cache' );?>
+				<a href="https://docs.litespeedtech.com/lscache/lscwp/imageopt/#image-optimization-summary-tab" target="_blank" class="litespeed-right litespeed-learn-more"><?php echo __('Learn More', 'litespeed-cache') ; ?></a>
 			</h3>
 
 			<p>
@@ -62,7 +62,7 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 
 			<?php if ( $wet_limit ) : ?>
 			<p class="litespeed-desc">
-				<?php echo __( 'To make sure our server can communicate with your server without any issues and everything works fine, for the few first requests the amount images allowed in single request is limited.' ) ; ?>
+				<?php echo __( 'To make sure our server can communicate with your server without any issues and everything works fine, for the few first requests the number of images allowed in a single request is limited.' ) ; ?>
 				<?php echo __( 'Current limit is', 'litespeed-cache' ) . ': <strong>' . $wet_limit . '</strong>'; ?>
 			</p>
 			<?php endif; ?>
@@ -93,7 +93,7 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 				<h3 class="litespeed-title-section">
 					<?php echo __( 'Optimization Status', 'litespeed-cache' ) ; ?>
 					<?php if ( ! empty( $img_count[ 'group.' . Img_Optm::STATUS_RAW ] ) ) : ?>
-						<a href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:image-optimization#image_optimization_in_litespeed_cache_for_wordpress" target="_blank" class="litespeed-learn-more"><?php echo __('Learn More', 'litespeed-cache') ; ?></a>
+						<a href="https://docs.litespeedtech.com/lscache/lscwp/imageopt/#optimization-summary" target="_blank" class="litespeed-learn-more"><?php echo __('Learn More', 'litespeed-cache') ; ?></a>
 					<?php endif; ?>
 				</h3>
 
@@ -108,7 +108,7 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 							</code>
 						</p>
 						<p class="litespeed-desc">
-							<?php echo __( 'After LiteSpeed\'s Image Optimization Server finishes optimization, it will notify your site to pull the optimized images.', 'litespeed-cache' ) ; ?>
+							<?php echo __( 'After the QUIC.cloud Image Optimization server finishes optimization, it will notify your site to pull the optimized images.', 'litespeed-cache' ) ; ?>
 							<?php echo __( 'This process is automatic.', 'litespeed-cache' ) ; ?>
 						</p>
 					<?php endif ; ?>
@@ -212,6 +212,16 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 
 				</div>
 
+				<div>
+					<h4><?php echo __( 'Image Thumbnail Group Sizes', 'litespeed-cache' ) ; ?></h4>
+					<div class="litespeed-desc litespeed-left20">
+						<?php foreach ( Media::get_instance()->get_image_sizes() as $title => $size ) {
+							echo "<div>$title ( " . ( $size[ 'width' ] ? $size[ 'width' ] . 'px' : '*' ) . ' x ' . ( $size[ 'height' ] ? $size[ 'height' ] . 'px' : '*' ) . ' )</div>';
+						} ; ?>
+					</div>
+
+				</div>
+
 				<hr class="litespeed-hr-with-space">
 				<div>
 					<h4><?php echo __( 'Delete all backups of the original images', 'litespeed-cache' ) ; ?></h4>
@@ -236,7 +246,7 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 					</p>
 					</div>
 				<?php endif ; ?>
-				<div class="litespeed-image-optim-summary-footer"><a href="<?php echo Utility::build_url( Router::ACTION_IMG_OPTM, Img_Optm::TYPE_RM_BKUP ) ; ?>" data-litespeed-cfm="<?php echo __( 'Are you sure to remove all image backups?', 'litespeed-cache' ) ; ?>" class="litespeed-link-with-icon litespeed-danger">
+				<div class="litespeed-image-optim-summary-footer"><a href="<?php echo Utility::build_url( Router::ACTION_IMG_OPTM, Img_Optm::TYPE_RM_BKUP ) ; ?>" data-litespeed-cfm="<?php echo __( 'Are you sure you want to remove all image backups?', 'litespeed-cache' ) ; ?>" class="litespeed-link-with-icon litespeed-danger">
 					<span class="dashicons dashicons-trash"></span><?php echo __( 'Remove Original Image Backups', 'litespeed-cache' ) ; ?>
 				</a></div>
 			</div>
@@ -261,7 +271,7 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 
 							<code><?php echo Admin_Display::print_plural( $img_count[ 'groups_all' ] ) ; ?></code>
 
-							<a href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:image-optimization:image-groups" target="_blank" class="litespeed-desc litespeed-help-btn-icon" data-balloon-pos="up" aria-label="<?php echo __( 'What is a group?', 'litespeed-cache') ; ?>">
+							<a href="https://docs.litespeedtech.com/lscache/lscwp/imageopt/#what-is-an-image-group" target="_blank" class="litespeed-desc litespeed-help-btn-icon" data-balloon-pos="up" aria-label="<?php echo __( 'What is a group?', 'litespeed-cache') ; ?>">
 								<span class="dashicons dashicons-editor-help"></span>
 								<span class="screen-reader-text"><?php echo __( 'What is an image group?', 'litespeed-cache' );?></span>
 							</a>
@@ -288,7 +298,7 @@ if ( ! empty( $img_count[ 'img.' . Img_Optm::STATUS_ERR_FETCH ] ) ) {
 
 							<code><?php echo Admin_Display::print_plural( $img_count[ 'imgs_gathered' ], 'image' ) ; ?></code>
 
-							<a href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:image-optimization:image-groups" target="_blank" class="litespeed-desc litespeed-help-btn-icon" data-balloon-pos="up" aria-label="<?php echo __( 'What is a group?', 'litespeed-cache') ; ?>">
+							<a href="https://docs.litespeedtech.com/lscache/lscwp/imageopt/#what-is-an-image-group" target="_blank" class="litespeed-desc litespeed-help-btn-icon" data-balloon-pos="up" aria-label="<?php echo __( 'What is a group?', 'litespeed-cache') ; ?>">
 								<span class="dashicons dashicons-editor-help"></span>
 								<span class="screen-reader-text"><?php echo __( 'What is an image group?', 'litespeed-cache' );?></span>
 							</a>

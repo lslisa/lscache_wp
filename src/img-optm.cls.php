@@ -290,11 +290,14 @@ class Img_Optm extends Base
 	 */
 	public function wet_limit()
 	{
-		if ( empty( $this->_summary[ 'img_taken' ] ) ) {
-			return 1;
+		$wet_limit = 1;
+		if ( ! empty( $this->_summary[ 'img_taken' ] ) ) {
+			$wet_limit = pow( $this->_summary[ 'img_taken' ], 2 );
 		}
 
-		$wet_limit = pow( $this->_summary[ 'img_taken' ], 2 );
+		if ( $wet_limit == 1 && ! empty( $this->_summary[ 'img_status.' . self::STATUS_ERR_OPTM ] ) ) {
+			$wet_limit = pow( $this->_summary[ 'img_status.' . self::STATUS_ERR_OPTM ], 2 );
+		}
 
 		if ( $wet_limit < Cloud::IMG_OPTM_DEFAULT_GROUP ) {
 			return $wet_limit;
@@ -367,12 +370,37 @@ class Img_Optm extends Base
 
 		$this->_img_in_queue = $wpdb->get_results( $q, ARRAY_A );
 
+		// Limit maximum number of items waiting (status requested) to the allowance
+		$q = "SELECT COUNT(1) FROM `$this->_table_img_optming` WHERE optm_status = %d";
+		$q = $wpdb->prepare( $q, array( self::STATUS_REQUESTED) );
+		$total_requested = $wpdb->get_var( $q );
+		$max_requested = $allowance * 1;
+
+		if ( $total_requested > $max_requested ) {
+			Debug2::debug( '[Img_Optm] ❌ Too many queued images ('.$total_requested.' > '.$max_requested.')' );
+			Admin_Display::error( Error::msg( 'too_many_requested' ) );
+			return;
+		}
+
+		// Limit maximum number of items waiting to be pulled
+		$q = "SELECT COUNT(1) FROM `$this->_table_img_optming` WHERE optm_status = %d";
+		$q = $wpdb->prepare( $q, array( self::STATUS_NOTIFIED) );
+		$total_notified = $wpdb->get_var( $q );
+		$max_notified = $allowance * 5;
+
+		if ( $total_notified > $max_notified ) {
+			Debug2::debug( '[Img_Optm] ❌ Too many notified images ('.$total_notified.' > '.$max_notified.')' );
+			Admin_Display::error( Error::msg( 'too_many_notified' ) );
+			return;
+		}
+
 		$num_a = count( $this->_img_in_queue );
 		Debug2::debug( '[Img_Optm] Images found: ' . $num_a );
 		$this->_filter_duplicated_src();
+		$this->_filter_invalid_src();
 		$num_b = count( $this->_img_in_queue );
 		if ( $num_b != $num_a ) {
-			Debug2::debug( '[Img_Optm] Images after filtered duplicated src: ' . $num_b );
+			Debug2::debug( '[Img_Optm] Images after filtered duplicated/invalid src: ' . $num_b );
 		}
 
 		if ( ! $num_b ) {
@@ -425,11 +453,53 @@ class Img_Optm extends Base
 			return;
 		}
 
-		Debug2::debug( '[Img_Optm] Found duplicated src [total_img_duplicated] ' . count( $img_in_queue_duplicated ) );
+		$count = count( $img_in_queue_duplicated );
+		$msg = sprintf( __( 'Bypassed %1$s duplicated images.', 'litespeed-cache' ), $count );
+		Admin_Display::succeed( $msg );
+
+		Debug2::debug( '[Img_Optm] Found duplicated src [total_img_duplicated] ' . $count );
 
 		// Update img table
 		$ids = implode( ',', $img_in_queue_duplicated );
 		$q = "UPDATE `$this->_table_img_optm` SET optm_status = '" . self::STATUS_DUPLICATED . "' WHERE id IN ( $ids )";
+		$wpdb->query( $q );
+	}
+
+	/**
+	 * Filter the invalid src before sending
+	 *
+	 * @since 3.0.8.3
+	 * @access private
+	 */
+	private function _filter_invalid_src()
+	{
+		global $wpdb;
+
+		$img_in_queue_invalid = array();
+		foreach ( $this->_img_in_queue as $k => $v ) {
+			if ( $v[ 'src' ] ) {
+				$extension = pathinfo( $v[ 'src' ], PATHINFO_EXTENSION );
+			}
+			if ( ! $v[ 'src' ] || empty( $extension ) || ! in_array( $extension, array( 'jpg', 'jpeg', 'png', 'gif' ) ) ) {
+				$img_in_queue_invalid[] = $v[ 'id' ];
+				unset( $this->_img_in_queue[ $k ] );
+				continue;
+			}
+		}
+
+		if ( ! $img_in_queue_invalid ) {
+			return;
+		}
+
+		$count = count( $img_in_queue_invalid );
+		$msg = sprintf( __( 'Cleared %1$s invalid images.', 'litespeed-cache' ), $count );
+		Admin_Display::succeed( $msg );
+
+		Debug2::debug( '[Img_Optm] Found invalid src [total] ' . $count );
+
+		// Update img table
+		$ids = implode( ',', $img_in_queue_invalid );
+		$q = "DELETE FROM `$this->_table_img_optm` WHERE id IN ( $ids )";
 		$wpdb->query( $q );
 	}
 
@@ -611,12 +681,17 @@ class Img_Optm extends Base
 			foreach ( $list as $v ) {
 				$json = $notified_data[ $v->id ];
 
+				$server = ! empty( $json['server'] ) ? $json['server'] : $_POST['server'];
+
 				$server_info = array(
-					'server'	=> $_POST[ 'server' ],
+					'server'	=> $server,
 				);
 
 				// Save server side ID to send taken notification after pulled
 				$server_info[ 'id' ] = $json[ 'id' ];
+				if ( !empty( $json['file_id'] ) ) {
+					$server_info['file_id'] = $json['file_id'];
+				}
 
 				// Optm info array
 				$postmeta_info =  array(
@@ -695,6 +770,15 @@ class Img_Optm extends Base
 			// Update img_optm
 			$q = "UPDATE `$this->_table_img_optm` SET optm_status = %d WHERE id IN ( " . implode( ',', array_fill( 0, count( $notified_data ), '%d' ) ) . " ) ";
 			$wpdb->query( $wpdb->prepare( $q, array_merge( array( $status ), $notified_data ) ) );
+
+			// Log the failed optm to summary, to be counted in wet_limit
+			if ( $status == self::STATUS_ERR_OPTM ) {
+				if ( empty( $this->_summary[ 'img_status.' . $status ] ) ) {
+					$this->_summary[ 'img_status.' . $status ] = 0;
+				}
+				$this->_summary[ 'img_status.' . $status ] += count( $notified_data );
+				self::save_summary();
+			}
 		}
 
 		// redo count err
@@ -797,15 +881,15 @@ class Img_Optm extends Base
 				if ( $response[ 'response' ][ 'code' ] == 404 ) {
 					$this->_step_back_image( $row_img->id );
 
-					$msg = __( 'Optimized image file expired and was cleared.', 'litespeed-cache' );
+					$msg = __( 'Some optimized image file(s) has expired and was cleared.', 'litespeed-cache' );
 					Admin_Display::error( $msg );
-					return;
+					continue;
 				}
 
 				file_put_contents( $local_file . '.tmp', $response[ 'body' ] );
 
 				if ( ! file_exists( $local_file . '.tmp' ) || ! filesize( $local_file . '.tmp' ) || md5_file( $local_file . '.tmp' ) !== $server_info[ 'ori_md5' ] ) {
-					Debug2::debug( '[Img_Optm] ❌ Failed to pull optimized img: file md5 dismatch [url] ' . $server_info[ 'server' ] . '/' . $server_info[ 'ori' ] . ' [server_md5] ' . $server_info[ 'ori_md5' ] );
+					Debug2::debug( '[Img_Optm] ❌ Failed to pull optimized img: file md5 mismatch [url] ' . $server_info[ 'server' ] . '/' . $server_info[ 'ori' ] . ' [server_md5] ' . $server_info[ 'ori_md5' ] );
 
 					// Update status to failed
 					$q = "UPDATE `$this->_table_img_optm` SET optm_status = %d WHERE id = %d ";
@@ -814,9 +898,9 @@ class Img_Optm extends Base
 					$q = "DELETE FROM `$this->_table_img_optming` WHERE id = %d ";
 					$wpdb->query( $wpdb->prepare( $q, $row_img->id ) );
 
-					$msg = __( 'Pulled image md5 dismatched', 'litespeed-cache' );
+					$msg = __( 'One or more pulled images does not match with the notified image md5', 'litespeed-cache' );
 					Admin_Display::error( $msg );
-					return;
+					continue;
 				}
 
 				// Backup ori img
@@ -866,7 +950,7 @@ class Img_Optm extends Base
 				file_put_contents( $local_file . '.webp', $response[ 'body' ] );
 
 				if ( ! file_exists( $local_file . '.webp' ) || ! filesize( $local_file . '.webp' ) || md5_file( $local_file . '.webp' ) !== $server_info[ 'webp_md5' ] ) {
-					Debug2::debug( '[Img_Optm] ❌ Failed to pull optimized webp img: file md5 dismatch, server md5: ' . $server_info[ 'webp_md5' ] );
+					Debug2::debug( '[Img_Optm] ❌ Failed to pull optimized webp img: file md5 mismatch, server md5: ' . $server_info[ 'webp_md5' ] );
 
 					// update status to failed
 					$q = "UPDATE `$this->_table_img_optm` SET optm_status = %d WHERE id = %d ";
@@ -875,7 +959,7 @@ class Img_Optm extends Base
 					$q = "DELETE FROM `$this->_table_img_optming` WHERE id = %d ";
 					$wpdb->query( $wpdb->prepare( $q, $row_img->id ) );
 
-					$msg = __( 'Pulled WebP image md5 dismatched', 'litespeed-cache' );
+					$msg = __( 'Pulled WebP image md5 does not match the notified WebP image md5.', 'litespeed-cache' );
 					Admin_Display::error( $msg );
 					return;
 				}
@@ -908,7 +992,9 @@ class Img_Optm extends Base
 			if ( empty( $server_list[ $server_info[ 'server' ] ] ) ) {
 				$server_list[ $server_info[ 'server' ] ] = array();
 			}
-			$server_list[ $server_info[ 'server' ] ][] = $server_info[ 'id' ];
+
+			$server_info_id = ! empty( $server_info['file_id'] ) ? $server_info['file_id'] : $server_info['id'];
+			$server_list[ $server_info[ 'server' ] ][] = $server_info_id;
 		}
 
 		// Notify IAPI images taken
@@ -916,8 +1002,10 @@ class Img_Optm extends Base
 			$data = array(
 				'action'	=> self::CLOUD_ACTION_TAKEN,
 				'list' 		=> $img_list,
+				'server'	=> $server,
 			);
-			Cloud::post( Cloud::SVC_IMG_OPTM, $data ); // We don't use $server. So if user changed cloud node, the previous request will fail to notify, but won't hurt so just ignore
+			// TODO: improve this so we do not call once per server, but just once and then filter on the server side
+			Cloud::post( Cloud::SVC_IMG_OPTM, $data );
 		}
 
 		if ( empty( $this->_summary[ 'img_taken' ] ) ) {
@@ -1006,16 +1094,6 @@ class Img_Optm extends Base
 			return;
 		}
 
-		Debug2::debug( '[Img_Optm] sending CLEAN cmd to QUIC.cloud' ) ;
-
-		$data = array(
-			'action'	=> self::CLOUD_ACTION_CLEAN,
-		);
-		$json = Cloud::post( Cloud::SVC_IMG_OPTM, $data, 120 );
-		if ( ! is_array( $json ) ) {
-			return;
-		}
-
 		// Clear local working table queue
 		if ( Data::get_instance()->tb_exist( 'img_optming' ) ) {
 			$q = "TRUNCATE `$this->_table_img_optming`";
@@ -1098,12 +1176,6 @@ class Img_Optm extends Base
 		// Clear options table summary info
 		self::delete_option( '_summary' ) ;
 		self::delete_option( self::DB_NEED_PULL ) ;
-
-		// Inform Cloud server
-		$data = array(
-			'action'	=> self::CLOUD_ACTION_CLEAN,
-		);
-		$json = Cloud::post( Cloud::SVC_IMG_OPTM, $data ) ;
 
 		$msg = __( 'Destroy all optimization data successfully.', 'litespeed-cache' ) ;
 		Admin_Display::succeed( $msg ) ;

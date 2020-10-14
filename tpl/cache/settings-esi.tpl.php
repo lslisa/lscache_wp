@@ -5,13 +5,13 @@ defined( 'WPINC' ) || exit ;
 
 <h3 class="litespeed-title-short">
 	<?php echo __( 'ESI Settings', 'litespeed-cache' ) ; ?>
-	<?php $this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:configuration:esi', false, 'litespeed-learn-more' ) ; ?>
+	<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/cache/#esi-tab' ); ?>
 </h3>
 
 <div class="litespeed-description">
 	<p><?php echo __( 'With ESI (Edge Side Includes), pages may be served from cache for logged-in users.', 'litespeed-cache' ) ; ?></p>
 	<p><?php echo __( 'ESI allows you to designate parts of your dynamic page as separate fragments that are then assembled together to make the whole page. In other words, ESI lets you “punch holes” in a page, and then fill those holes with content that may be cached privately, cached publicly with its own TTL, or not cached at all.', 'litespeed-cache' ) ; ?>
-		<?php $this->learn_more( 'https://blog.litespeedtech.com/2017/08/30/wpw-private-cache-vs-public-cache/', __( 'WpW: Private Cache vs. Public Cache', 'litespeed-cache' ) ) ; ?>
+		<?php Doc::learn_more( 'https://blog.litespeedtech.com/2017/08/30/wpw-private-cache-vs-public-cache/', __( 'WpW: Private Cache vs. Public Cache', 'litespeed-cache' ) ); ?>
 	</p>
 	<p>
 		💡:
@@ -21,10 +21,10 @@ defined( 'WPINC' ) || exit ;
 			'<code>[shortcodeA att1="val1" att2="val2"]</code>',
 			'<code>[esi shortcodeA att1="val1" att2="val2"]</code>'
 		) ; ?>
-		<?php $this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:configuration:esi:shortcode' ) ; ?>
+		<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/admin/#turning-wordpress-shortcodes-into-esi-blocks' ); ?>
 	</p>
 	<p>
-		<?php $this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:esi_sample', __( 'ESI sample for developers', 'litespeed-cache' ) ) ; ?>
+		<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/api/#generate-esi-block-url', __( 'ESI sample for developers', 'litespeed-cache' ) ); ?>
 	</p>
 </div>
 
@@ -83,11 +83,28 @@ defined( 'WPINC' ) || exit ;
 			<?php $this->title( $id ) ; ?>
 		</th>
 		<td>
-			<?php $this->build_textarea( $id ) ; ?>
+			<div class="litespeed-row-flex">
+				<div class="">
+					<?php $this->build_textarea( $id ) ; ?>
+				</div>
+				<div class="litespeed-width-3-10">
+					<p class="litespeed-desc">
+						<?php echo __( 'The list will be merged with the predefined nonces in your local data file.', 'litespeed-cache' ); ?>
+						<?php echo __( 'The latest data file is', 'litespeed-cache' ); ?>: <a href="https://github.com/litespeedtech/lscache_wp/blob/master/data/esi.nonces.txt" target="_blank">https://github.com/litespeedtech/lscache_wp/blob/master/data/esi.nonces.txt</a>
+						<br /><font class="litespeed-success">
+							<?php echo __( 'API', 'litespeed-cache' ); ?>:
+							<?php echo sprintf( __( 'Filter %s is supported.', 'litespeed-cache' ), '<code>litespeed_esi_nonces</code>' ); ?>
+						</font>
+					</p>
+				</div>
+			</div>
 			<div class="litespeed-desc">
 				<?php echo __( 'The above nonces will be converted to ESI automatically.', 'litespeed-cache' ); ?>
 				<?php Doc::one_per_line(); ?>
 				<br /><?php echo __( 'An optional second parameter may be used to specify cache control. Use a space to separate', 'litespeed-cache' ); ?>: <code>my_nonce_action private</code>
+			</div>
+			<div class="litespeed-desc">
+				<?php echo sprintf( __( 'Wildcard %1$s supported (match zero or more characters). For example, to match %2$s and %3$s, use %4$s.', 'litespeed-cache' ), '<code>*</code>', '<code>nonce_formid_1</code>', '<code>nonce_formid_3</code>', '<code>nonce_formid_*</code>' ) ; ?>
 			</div>
 		</td>
 	</tr>

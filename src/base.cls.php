@@ -7,283 +7,286 @@
  * @subpackage 	LiteSpeed/inc
  * @author     	LiteSpeed Technologies <info@litespeedtech.com>
  */
-namespace LiteSpeed ;
+namespace LiteSpeed;
 
-defined( 'WPINC' ) || exit ;
+defined( 'WPINC' ) || exit;
 
-class Base extends Instance
-{
-	protected static $_instance ;
+class Base extends Instance {
+	protected static $_instance;
 
 	// This is redundant since v3.0
 	// New conf items are `litespeed.key`
-	const OPTION_NAME = 'litespeed-cache-conf' ;
+	const OPTION_NAME = 'litespeed-cache-conf';
 
-	const _CACHE = '_cache' ; // final cache status from setting
+	const _CACHE = '_cache'; // final cache status from setting
 
 	## -------------------------------------------------- ##
 	## --------------     	General	    ----------------- ##
 	## -------------------------------------------------- ##
-	const _VER 	= '_version' ; // Not set-able
-	const HASH 		= 'hash' ; // Not set-able
-	const O_AUTO_UPGRADE 	= 'auto_upgrade' ;
-	const O_API_KEY 		= 'api_key' ;
-	const O_SERVER_IP 		= 'server_ip' ;
-	const O_NEWS 			= 'news' ;
+	const _VER 	= '_version'; // Not set-able
+	const HASH 		= 'hash'; // Not set-able
+	const O_AUTO_UPGRADE 	= 'auto_upgrade';
+	const O_API_KEY 		= 'api_key';
+	const O_SERVER_IP 		= 'server_ip';
+	const O_NEWS 			= 'news';
 
 	## -------------------------------------------------- ##
 	## --------------		Cache 		----------------- ##
 	## -------------------------------------------------- ##
-	const O_CACHE 					= 'cache' ;
-	const O_CACHE_PRIV 				= 'cache-priv' ;
-	const O_CACHE_COMMENTER 		= 'cache-commenter' ;
-	const O_CACHE_REST 				= 'cache-rest' ;
-	const O_CACHE_PAGE_LOGIN		= 'cache-page_login' ;
-	const O_CACHE_FAVICON 			= 'cache-favicon' ;
-	const O_CACHE_RES 				= 'cache-resources' ;
-	const O_CACHE_MOBILE 			= 'cache-mobile' ;
-	const O_CACHE_MOBILE_RULES		= 'cache-mobile_rules' ;
-	const O_CACHE_BROWSER 			= 'cache-browser' ;
-	const O_CACHE_EXC_USERAGENTS 	= 'cache-exc_useragents' ;
-	const O_CACHE_EXC_COOKIES 		= 'cache-exc_cookies' ;
-	const O_CACHE_EXC_QS 			= 'cache-exc_qs' ;
-	const O_CACHE_EXC_CAT 			= 'cache-exc_cat' ;
-	const O_CACHE_EXC_TAG 			= 'cache-exc_tag' ;
-	const O_CACHE_FORCE_URI 		= 'cache-force_uri' ;
-	const O_CACHE_FORCE_PUB_URI		= 'cache-force_pub_uri' ;
-	const O_CACHE_PRIV_URI 			= 'cache-priv_uri' ;
-	const O_CACHE_EXC 				= 'cache-exc' ;
-	const O_CACHE_EXC_ROLES 		= 'cache-exc_roles' ;
-	const O_CACHE_DROP_QS 			= 'cache-drop_qs' ;
-	const O_CACHE_TTL_PUB 			= 'cache-ttl_pub' ;
-	const O_CACHE_TTL_PRIV 			= 'cache-ttl_priv' ;
-	const O_CACHE_TTL_FRONTPAGE 	= 'cache-ttl_frontpage' ;
-	const O_CACHE_TTL_FEED 			= 'cache-ttl_feed' ;
-	const O_CACHE_TTL_REST 			= 'cache-ttl_rest' ;
-	const O_CACHE_TTL_STATUS 		= 'cache-ttl_status' ;
-	const O_CACHE_TTL_BROWSER 		= 'cache-ttl_browser' ;
-	const O_CACHE_LOGIN_COOKIE 		= 'cache-login_cookie' ;
-	const O_CACHE_VARY_GROUP 		= 'cache-vary_group' ;
+	const O_CACHE 					= 'cache';
+	const O_CACHE_PRIV 				= 'cache-priv';
+	const O_CACHE_COMMENTER 		= 'cache-commenter';
+	const O_CACHE_REST 				= 'cache-rest';
+	const O_CACHE_PAGE_LOGIN		= 'cache-page_login';
+	const O_CACHE_FAVICON 			= 'cache-favicon';
+	const O_CACHE_RES 				= 'cache-resources';
+	const O_CACHE_MOBILE 			= 'cache-mobile';
+	const O_CACHE_MOBILE_RULES		= 'cache-mobile_rules';
+	const O_CACHE_BROWSER 			= 'cache-browser';
+	const O_CACHE_EXC_USERAGENTS 	= 'cache-exc_useragents';
+	const O_CACHE_EXC_COOKIES 		= 'cache-exc_cookies';
+	const O_CACHE_EXC_QS 			= 'cache-exc_qs';
+	const O_CACHE_EXC_CAT 			= 'cache-exc_cat';
+	const O_CACHE_EXC_TAG 			= 'cache-exc_tag';
+	const O_CACHE_FORCE_URI 		= 'cache-force_uri';
+	const O_CACHE_FORCE_PUB_URI		= 'cache-force_pub_uri';
+	const O_CACHE_PRIV_URI 			= 'cache-priv_uri';
+	const O_CACHE_EXC 				= 'cache-exc';
+	const O_CACHE_EXC_ROLES 		= 'cache-exc_roles';
+	const O_CACHE_DROP_QS 			= 'cache-drop_qs';
+	const O_CACHE_TTL_PUB 			= 'cache-ttl_pub';
+	const O_CACHE_TTL_PRIV 			= 'cache-ttl_priv';
+	const O_CACHE_TTL_FRONTPAGE 	= 'cache-ttl_frontpage';
+	const O_CACHE_TTL_FEED 			= 'cache-ttl_feed';
+	const O_CACHE_TTL_REST 			= 'cache-ttl_rest';
+	const O_CACHE_TTL_STATUS 		= 'cache-ttl_status';
+	const O_CACHE_TTL_BROWSER 		= 'cache-ttl_browser';
+	const O_CACHE_LOGIN_COOKIE 		= 'cache-login_cookie';
+	const O_CACHE_VARY_GROUP 		= 'cache-vary_group';
 
 	## -------------------------------------------------- ##
 	## --------------		Purge 		----------------- ##
 	## -------------------------------------------------- ##
-	const O_PURGE_ON_UPGRADE 		= 'purge-upgrade' ;
-	const O_PURGE_STALE 			= 'purge-stale' ;
-	const O_PURGE_POST_ALL 			= 'purge-post_all' ;
-	const O_PURGE_POST_FRONTPAGE 	= 'purge-post_f' ;
-	const O_PURGE_POST_HOMEPAGE 	= 'purge-post_h' ;
-	const O_PURGE_POST_PAGES 		= 'purge-post_p' ;
-	const O_PURGE_POST_PAGES_WITH_RECENT_POSTS = 'purge-post_pwrp' ;
-	const O_PURGE_POST_AUTHOR 		= 'purge-post_a' ;
-	const O_PURGE_POST_YEAR 		= 'purge-post_y' ;
-	const O_PURGE_POST_MONTH 		= 'purge-post_m' ;
-	const O_PURGE_POST_DATE 		= 'purge-post_d' ;
-	const O_PURGE_POST_TERM 		= 'purge-post_t' ; // include category|tag|tax
-	const O_PURGE_POST_POSTTYPE 	= 'purge-post_pt' ;
-	const O_PURGE_TIMED_URLS 		= 'purge-timed_urls' ;
-	const O_PURGE_TIMED_URLS_TIME 	= 'purge-timed_urls_time' ;
-	const O_PURGE_HOOK_ALL 			= 'purge-hook_all' ;
+	const O_PURGE_ON_UPGRADE 		= 'purge-upgrade';
+	const O_PURGE_STALE 			= 'purge-stale';
+	const O_PURGE_POST_ALL 			= 'purge-post_all';
+	const O_PURGE_POST_FRONTPAGE 	= 'purge-post_f';
+	const O_PURGE_POST_HOMEPAGE 	= 'purge-post_h';
+	const O_PURGE_POST_PAGES 		= 'purge-post_p';
+	const O_PURGE_POST_PAGES_WITH_RECENT_POSTS = 'purge-post_pwrp';
+	const O_PURGE_POST_AUTHOR 		= 'purge-post_a';
+	const O_PURGE_POST_YEAR 		= 'purge-post_y';
+	const O_PURGE_POST_MONTH 		= 'purge-post_m';
+	const O_PURGE_POST_DATE 		= 'purge-post_d';
+	const O_PURGE_POST_TERM 		= 'purge-post_t'; // include category|tag|tax
+	const O_PURGE_POST_POSTTYPE 	= 'purge-post_pt';
+	const O_PURGE_TIMED_URLS 		= 'purge-timed_urls';
+	const O_PURGE_TIMED_URLS_TIME 	= 'purge-timed_urls_time';
+	const O_PURGE_HOOK_ALL 			= 'purge-hook_all';
 
 	## -------------------------------------------------- ##
 	## --------------     	 ESI	    ----------------- ##
 	## -------------------------------------------------- ##
-	const O_ESI 				= 'esi' ;
-	const O_ESI_CACHE_ADMBAR 	= 'esi-cache_admbar' ;
-	const O_ESI_CACHE_COMMFORM 	= 'esi-cache_commform' ;
-	const O_ESI_NONCE 			= 'esi-nonce' ;
+	const O_ESI 				= 'esi';
+	const O_ESI_CACHE_ADMBAR 	= 'esi-cache_admbar';
+	const O_ESI_CACHE_COMMFORM 	= 'esi-cache_commform';
+	const O_ESI_NONCE 			= 'esi-nonce';
 
 	## -------------------------------------------------- ##
 	## --------------     Utilities	    ----------------- ##
 	## -------------------------------------------------- ##
-	const O_UTIL_INSTANT_CLICK 		= 'util-instant_click' ;
-	const O_UTIL_NO_HTTPS_VARY 		= 'util-no_https_vary' ;
+	const O_UTIL_INSTANT_CLICK 		= 'util-instant_click';
+	const O_UTIL_NO_HTTPS_VARY 		= 'util-no_https_vary';
 
 	## -------------------------------------------------- ##
 	## --------------		Debug 		----------------- ##
 	## -------------------------------------------------- ##
-	const O_DEBUG_DISABLE_ALL 			= 'debug-disable_all' ;
-	const O_DEBUG 						= 'debug' ;
-	const O_DEBUG_IPS 					= 'debug-ips' ;
-	const O_DEBUG_LEVEL 				= 'debug-level' ;
-	const O_DEBUG_FILESIZE 				= 'debug-filesize' ;
-	const O_DEBUG_COOKIE 				= 'debug-cookie' ;
-	const O_DEBUG_COLLAPS_QS 			= 'debug-collaps_qs' ;
-	const O_DEBUG_INC 					= 'debug-inc' ;
-	const O_DEBUG_EXC 					= 'debug-exc' ;
+	const O_DEBUG_DISABLE_ALL 			= 'debug-disable_all';
+	const O_DEBUG 						= 'debug';
+	const O_DEBUG_IPS 					= 'debug-ips';
+	const O_DEBUG_LEVEL 				= 'debug-level';
+	const O_DEBUG_FILESIZE 				= 'debug-filesize';
+	const O_DEBUG_COOKIE 				= 'debug-cookie';
+	const O_DEBUG_COLLAPS_QS 			= 'debug-collaps_qs';
+	const O_DEBUG_INC 					= 'debug-inc';
+	const O_DEBUG_EXC 					= 'debug-exc';
 
 	## -------------------------------------------------- ##
 	## --------------	   DB Optm  	----------------- ##
 	## -------------------------------------------------- ##
-	const O_DB_OPTM_REVISIONS_MAX 		= 'db_optm-revisions_max' ;
-	const O_DB_OPTM_REVISIONS_AGE 		= 'db_optm-revisions_age' ;
+	const O_DB_OPTM_REVISIONS_MAX 		= 'db_optm-revisions_max';
+	const O_DB_OPTM_REVISIONS_AGE 		= 'db_optm-revisions_age';
 
 	## -------------------------------------------------- ##
 	## --------------	  HTML Optm 	----------------- ##
 	## -------------------------------------------------- ##
-	const O_OPTM_CSS_MIN 			= 'optm-css_min' ;
-	const O_OPTM_CSS_INLINE_MIN 	= 'optm-css_inline_min' ;
-	const O_OPTM_CSS_COMB 			= 'optm-css_comb' ;
-	const O_OPTM_CSS_COMB_PRIO 		= 'optm-css_comb_priority' ;
-	const O_OPTM_CSS_HTTP2 			= 'optm-css_http2' ;
-	const O_OPTM_CSS_EXC 			= 'optm-css_exc' ;
-	const O_OPTM_JS_MIN 			= 'optm-js_min' ;
-	const O_OPTM_JS_INLINE_MIN 		= 'optm-js_inline_min' ;
-	const O_OPTM_JS_COMB 			= 'optm-js_comb' ;
-	const O_OPTM_JS_COMB_PRIO 		= 'optm-js_comb_priority' ;
-	const O_OPTM_JS_HTTP2 			= 'optm-js_http2' ;
-	const O_OPTM_JS_EXC 			= 'optm-js_exc' ;
-	const O_OPTM_TTL 				= 'optm-ttl' ;
-	const O_OPTM_HTML_MIN 			= 'optm-html_min' ;
-	const O_OPTM_QS_RM 				= 'optm-qs_rm' ;
-	const O_OPTM_GGFONTS_RM 		= 'optm-ggfonts_rm' ;
-	const O_OPTM_CSS_ASYNC 			= 'optm-css_async' ;
-	const O_OPTM_CCSS_GEN 			= 'optm-ccss_gen' ;
-	const O_OPTM_CCSS_ASYNC 		= 'optm-ccss_async' ;
-	const O_OPTM_CSS_ASYNC_INLINE 	= 'optm-css_async_inline' ;
-	const O_OPTM_CSS_FONT_DISPLAY 	= 'optm-css_font_display' ;
-	const O_OPTM_JS_DEFER 			= 'optm-js_defer' ;
-	const O_OPTM_JS_INLINE_DEFER	= 'optm-js_inline_defer' ;
-	const O_OPTM_EMOJI_RM 			= 'optm-emoji_rm' ;
-	const O_OPTM_EXC_JQ 			= 'optm-exc_jq' ;
-	const O_OPTM_GGFONTS_ASYNC 		= 'optm-ggfonts_async' ;
-	const O_OPTM_MAX_SIZE 			= 'optm-max_size' ;
-	const O_OPTM_RM_COMMENT 		= 'optm-rm_comment' ;
-	const O_OPTM_EXC_ROLES 			= 'optm-exc_roles' ;
-	const O_OPTM_CCSS_CON			= 'optm-ccss_con' ;
-	const O_OPTM_JS_DEFER_EXC 		= 'optm-js_defer_exc' ;
-	const O_OPTM_DNS_PREFETCH		= 'optm-dns_prefetch' ;
-	const O_OPTM_DNS_PREFETCH_CTRL	= 'optm-dns_prefetch_ctrl' ;
-	const O_OPTM_EXC 				= 'optm-exc' ;
-	const O_OPTM_CCSS_SEP_POSTTYPE 	= 'optm-ccss_sep_posttype' ;
-	const O_OPTM_CCSS_SEP_URI 		= 'optm-ccss_sep_uri' ;
+	const O_OPTM_CSS_MIN 			= 'optm-css_min';
+	const O_OPTM_CSS_COMB 			= 'optm-css_comb';
+	const O_OPTM_CSS_UNIQUE 		= 'optm-css_unique';
+	const O_OPTM_UCSS 				= 'optm-ucss';
+	const O_OPTM_UCSS_ASYNC 		= 'optm-ucss_async';
+	const O_OPTM_UCSS_WHITELIST 	= 'optm-ucss_whitelist';
+	const O_OPTM_CSS_HTTP2 			= 'optm-css_http2';
+	const O_OPTM_CSS_EXC 			= 'optm-css_exc';
+	const O_OPTM_JS_MIN 			= 'optm-js_min';
+	const O_OPTM_JS_COMB 			= 'optm-js_comb';
+	const O_OPTM_JS_COMB_EXT_INL	= 'optm-js_comb_ext_inl';
+	const O_OPTM_JS_HTTP2 			= 'optm-js_http2';
+	const O_OPTM_JS_EXC 			= 'optm-js_exc';
+	const O_OPTM_TTL 				= 'optm-ttl';
+	const O_OPTM_HTML_MIN 			= 'optm-html_min';
+	const O_OPTM_QS_RM 				= 'optm-qs_rm';
+	const O_OPTM_GGFONTS_RM 		= 'optm-ggfonts_rm';
+	const O_OPTM_CSS_ASYNC 			= 'optm-css_async';
+	const O_OPTM_CCSS_GEN 			= 'optm-ccss_gen';
+	const O_OPTM_CCSS_ASYNC 		= 'optm-ccss_async';
+	const O_OPTM_CSS_ASYNC_INLINE 	= 'optm-css_async_inline';
+	const O_OPTM_CSS_FONT_DISPLAY 	= 'optm-css_font_display';
+	const O_OPTM_JS_DEFER 			= 'optm-js_defer';
+	const O_OPTM_JS_INLINE_DEFER	= 'optm-js_inline_defer';
+	const O_OPTM_LOCALIZE			= 'optm-localize';
+	const O_OPTM_LOCALIZE_DOMAINS	= 'optm-localize_domains';
+	const O_OPTM_EMOJI_RM 			= 'optm-emoji_rm';
+	const O_OPTM_NOSCRIPT_RM 		= 'optm-noscript_rm';
+	const O_OPTM_GGFONTS_ASYNC 		= 'optm-ggfonts_async';
+	const O_OPTM_RM_COMMENT 		= 'optm-rm_comment';
+	const O_OPTM_EXC_ROLES 			= 'optm-exc_roles';
+	const O_OPTM_CCSS_CON			= 'optm-ccss_con';
+	const O_OPTM_JS_DEFER_EXC 		= 'optm-js_defer_exc';
+	const O_OPTM_DNS_PREFETCH		= 'optm-dns_prefetch';
+	const O_OPTM_DNS_PREFETCH_CTRL	= 'optm-dns_prefetch_ctrl';
+	const O_OPTM_EXC 				= 'optm-exc';
+	const O_OPTM_CCSS_SEP_POSTTYPE 	= 'optm-ccss_sep_posttype';
+	const O_OPTM_CCSS_SEP_URI 		= 'optm-ccss_sep_uri';
 
 	## -------------------------------------------------- ##
 	## --------------	Object Cache	----------------- ##
 	## -------------------------------------------------- ##
-	const O_OBJECT				 = 'object' ;
-	const O_OBJECT_KIND			 = 'object-kind' ;
-	const O_OBJECT_HOST			 = 'object-host' ;
-	const O_OBJECT_PORT			 = 'object-port' ;
-	const O_OBJECT_LIFE			 = 'object-life' ;
-	const O_OBJECT_PERSISTENT	 = 'object-persistent' ;
-	const O_OBJECT_ADMIN		 = 'object-admin' ;
-	const O_OBJECT_TRANSIENTS	 = 'object-transients' ;
-	const O_OBJECT_DB_ID		 = 'object-db_id' ;
-	const O_OBJECT_USER			 = 'object-user' ;
-	const O_OBJECT_PSWD			 = 'object-pswd' ;
-	const O_OBJECT_GLOBAL_GROUPS = 'object-global_groups' ;
-	const O_OBJECT_NON_PERSISTENT_GROUPS = 'object-non_persistent_groups' ;
+	const O_OBJECT				 = 'object';
+	const O_OBJECT_KIND			 = 'object-kind';
+	const O_OBJECT_HOST			 = 'object-host';
+	const O_OBJECT_PORT			 = 'object-port';
+	const O_OBJECT_LIFE			 = 'object-life';
+	const O_OBJECT_PERSISTENT	 = 'object-persistent';
+	const O_OBJECT_ADMIN		 = 'object-admin';
+	const O_OBJECT_TRANSIENTS	 = 'object-transients';
+	const O_OBJECT_DB_ID		 = 'object-db_id';
+	const O_OBJECT_USER			 = 'object-user';
+	const O_OBJECT_PSWD			 = 'object-pswd';
+	const O_OBJECT_GLOBAL_GROUPS = 'object-global_groups';
+	const O_OBJECT_NON_PERSISTENT_GROUPS = 'object-non_persistent_groups';
 
 	## -------------------------------------------------- ##
 	## --------------	Discussion		----------------- ##
 	## -------------------------------------------------- ##
-	const O_DISCUSS_AVATAR_CACHE		= 'discuss-avatar_cache' ;
-	const O_DISCUSS_AVATAR_CRON			= 'discuss-avatar_cron' ;
-	const O_DISCUSS_AVATAR_CACHE_TTL	= 'discuss-avatar_cache_ttl' ;
+	const O_DISCUSS_AVATAR_CACHE		= 'discuss-avatar_cache';
+	const O_DISCUSS_AVATAR_CRON			= 'discuss-avatar_cron';
+	const O_DISCUSS_AVATAR_CACHE_TTL	= 'discuss-avatar_cache_ttl';
 
 	## -------------------------------------------------- ##
 	## --------------		 Media 		----------------- ##
 	## -------------------------------------------------- ##
-	const O_MEDIA_LAZY 							= 'media-lazy' ;
-	const O_MEDIA_LAZY_PLACEHOLDER 				= 'media-lazy_placeholder' ;
-	const O_MEDIA_PLACEHOLDER_RESP 				= 'media-placeholder_resp' ;
-	const O_MEDIA_PLACEHOLDER_RESP_COLOR		= 'media-placeholder_resp_color' ;
-	const O_MEDIA_PLACEHOLDER_RESP_SVG			= 'media-placeholder_resp_svg' ;
-	const O_MEDIA_LQIP							= 'media-lqip' ;
-	const O_MEDIA_LQIP_QUAL						= 'media-lqip_qual' ;
+	const O_MEDIA_LAZY 							= 'media-lazy';
+	const O_MEDIA_LAZY_PLACEHOLDER 				= 'media-lazy_placeholder';
+	const O_MEDIA_PLACEHOLDER_RESP 				= 'media-placeholder_resp';
+	const O_MEDIA_PLACEHOLDER_RESP_COLOR		= 'media-placeholder_resp_color';
+	const O_MEDIA_PLACEHOLDER_RESP_SVG			= 'media-placeholder_resp_svg';
+	const O_MEDIA_LQIP							= 'media-lqip';
+	const O_MEDIA_LQIP_QUAL						= 'media-lqip_qual';
 	const O_MEDIA_LQIP_MIN_W					= 'media-lqip_min_w';
 	const O_MEDIA_LQIP_MIN_H					= 'media-lqip_min_h';
-	const O_MEDIA_PLACEHOLDER_RESP_ASYNC		= 'media-placeholder_resp_async' ;
-	const O_MEDIA_IFRAME_LAZY 					= 'media-iframe_lazy' ;
-	const O_MEDIA_LAZYJS_INLINE 				= 'media-lazyjs_inline' ;
-	const O_MEDIA_LAZY_EXC 						= 'media-lazy_exc' ;
-	const O_MEDIA_LAZY_CLS_EXC 					= 'media-lazy_cls_exc' ;
-	const O_MEDIA_LAZY_PARENT_CLS_EXC 			= 'media-lazy_parent_cls_exc' ;
-	const O_MEDIA_IFRAME_LAZY_CLS_EXC 			= 'media-iframe_lazy_cls_exc' ;
-	const O_MEDIA_IFRAME_LAZY_PARENT_CLS_EXC 	= 'media-iframe_lazy_parent_cls_exc' ;
-	const O_MEDIA_LAZY_URI_EXC					= 'media-lazy_uri_exc' ;
+	const O_MEDIA_PLACEHOLDER_RESP_ASYNC		= 'media-placeholder_resp_async';
+	const O_MEDIA_IFRAME_LAZY 					= 'media-iframe_lazy';
+	const O_MEDIA_LAZYJS_INLINE 				= 'media-lazyjs_inline';
+	const O_MEDIA_LAZY_EXC 						= 'media-lazy_exc';
+	const O_MEDIA_LAZY_CLS_EXC 					= 'media-lazy_cls_exc';
+	const O_MEDIA_LAZY_PARENT_CLS_EXC 			= 'media-lazy_parent_cls_exc';
+	const O_MEDIA_IFRAME_LAZY_CLS_EXC 			= 'media-iframe_lazy_cls_exc';
+	const O_MEDIA_IFRAME_LAZY_PARENT_CLS_EXC 	= 'media-iframe_lazy_parent_cls_exc';
+	const O_MEDIA_LAZY_URI_EXC					= 'media-lazy_uri_exc';
+	const O_MEDIA_LQIP_EXC						= 'media-lqip_exc';
 
 	## -------------------------------------------------- ##
 	## --------------	  Image Optm 	----------------- ##
 	## -------------------------------------------------- ##
-	const O_IMG_OPTM_AUTO 				= 'img_optm-auto' ;
-	const O_IMG_OPTM_CRON 				= 'img_optm-cron' ;
-	const O_IMG_OPTM_ORI 				= 'img_optm-ori' ;
-	const O_IMG_OPTM_RM_BKUP 			= 'img_optm-rm_bkup' ;
-	const O_IMG_OPTM_WEBP 				= 'img_optm-webp' ;
-	const O_IMG_OPTM_LOSSLESS 			= 'img_optm-lossless' ;
-	const O_IMG_OPTM_EXIF 				= 'img_optm-exif' ;
-	const O_IMG_OPTM_WEBP_REPLACE 		= 'img_optm-webp_replace' ;
-	const O_IMG_OPTM_WEBP_ATTR 			= 'img_optm-webp_attr' ;
-	const O_IMG_OPTM_WEBP_REPLACE_SRCSET = 'img_optm-webp_replace_srcset' ;
-	const O_IMG_OPTM_JPG_QUALITY 		= 'img_optm-jpg_quality' ;
+	const O_IMG_OPTM_AUTO 				= 'img_optm-auto';
+	const O_IMG_OPTM_CRON 				= 'img_optm-cron';
+	const O_IMG_OPTM_ORI 				= 'img_optm-ori';
+	const O_IMG_OPTM_RM_BKUP 			= 'img_optm-rm_bkup';
+	const O_IMG_OPTM_WEBP 				= 'img_optm-webp';
+	const O_IMG_OPTM_LOSSLESS 			= 'img_optm-lossless';
+	const O_IMG_OPTM_EXIF 				= 'img_optm-exif';
+	const O_IMG_OPTM_WEBP_REPLACE 		= 'img_optm-webp_replace';
+	const O_IMG_OPTM_WEBP_ATTR 			= 'img_optm-webp_attr';
+	const O_IMG_OPTM_WEBP_REPLACE_SRCSET = 'img_optm-webp_replace_srcset';
+	const O_IMG_OPTM_JPG_QUALITY 		= 'img_optm-jpg_quality';
 
 	## -------------------------------------------------- ##
 	## --------------		Crawler		----------------- ##
 	## -------------------------------------------------- ##
-	const O_CRAWLER 				= 'crawler' ;
-	const O_CRAWLER_POSTS 			= 'crawler-inc_posts' ;
-	const O_CRAWLER_PAGES 			= 'crawler-inc_pages' ;
-	const O_CRAWLER_CATS 			= 'crawler-inc_cats' ;
-	const O_CRAWLER_TAGS 			= 'crawler-inc_tags' ;
-	const O_CRAWLER_EXC_CPT 		= 'crawler-exc_cpt' ;
-	const O_CRAWLER_ORDER_LINKS 	= 'crawler-order_links' ;
-	const O_CRAWLER_USLEEP 			= 'crawler-usleep' ;
-	const O_CRAWLER_RUN_DURATION 	= 'crawler-run_duration' ;
-	const O_CRAWLER_RUN_INTERVAL 	= 'crawler-run_interval' ;
-	const O_CRAWLER_CRAWL_INTERVAL 	= 'crawler-crawl_interval' ;
-	const O_CRAWLER_THREADS 		= 'crawler-threads' ;
-	const O_CRAWLER_TIMEOUT 		= 'crawler-timeout' ;
-	const O_CRAWLER_LOAD_LIMIT 		= 'crawler-load_limit' ;
+	const O_CRAWLER 				= 'crawler';
+	const O_CRAWLER_POSTS 			= 'crawler-inc_posts';
+	const O_CRAWLER_PAGES 			= 'crawler-inc_pages';
+	const O_CRAWLER_CATS 			= 'crawler-inc_cats';
+	const O_CRAWLER_TAGS 			= 'crawler-inc_tags';
+	const O_CRAWLER_EXC_CPT 		= 'crawler-exc_cpt';
+	const O_CRAWLER_ORDER_LINKS 	= 'crawler-order_links';
+	const O_CRAWLER_USLEEP 			= 'crawler-usleep';
+	const O_CRAWLER_RUN_DURATION 	= 'crawler-run_duration';
+	const O_CRAWLER_RUN_INTERVAL 	= 'crawler-run_interval';
+	const O_CRAWLER_CRAWL_INTERVAL 	= 'crawler-crawl_interval';
+	const O_CRAWLER_THREADS 		= 'crawler-threads';
+	const O_CRAWLER_TIMEOUT 		= 'crawler-timeout';
+	const O_CRAWLER_LOAD_LIMIT 		= 'crawler-load_limit';
 	const O_CRAWLER_SITEMAP 		= 'crawler-sitemap';
 	const O_CRAWLER_DROP_DOMAIN		= 'crawler-drop_domain';
-	const O_CRAWLER_ROLES 			= 'crawler-roles' ;
-	const O_CRAWLER_COOKIES 		= 'crawler-cookies' ;
+	const O_CRAWLER_MAP_TIMEOUT		= 'crawler-map_timeout';
+	const O_CRAWLER_ROLES 			= 'crawler-roles';
+	const O_CRAWLER_COOKIES 		= 'crawler-cookies';
 
 	## -------------------------------------------------- ##
 	## --------------		 Misc 		----------------- ##
 	## -------------------------------------------------- ##
-	const O_MISC_HTACCESS_FRONT 		= 'misc-htaccess_front' ;
-	const O_MISC_HTACCESS_BACK 			= 'misc-htaccess_back' ;
-	const O_MISC_HEARTBEAT_FRONT		= 'misc-heartbeat_front' ;
-	const O_MISC_HEARTBEAT_FRONT_TTL	= 'misc-heartbeat_front_ttl' ;
-	const O_MISC_HEARTBEAT_BACK			= 'misc-heartbeat_back' ;
-	const O_MISC_HEARTBEAT_BACK_TTL		= 'misc-heartbeat_back_ttl' ;
-	const O_MISC_HEARTBEAT_EDITOR		= 'misc-heartbeat_editor' ;
-	const O_MISC_HEARTBEAT_EDITOR_TTL	= 'misc-heartbeat_editor_ttl' ;
+	const O_MISC_HTACCESS_FRONT 		= 'misc-htaccess_front';
+	const O_MISC_HTACCESS_BACK 			= 'misc-htaccess_back';
+	const O_MISC_HEARTBEAT_FRONT		= 'misc-heartbeat_front';
+	const O_MISC_HEARTBEAT_FRONT_TTL	= 'misc-heartbeat_front_ttl';
+	const O_MISC_HEARTBEAT_BACK			= 'misc-heartbeat_back';
+	const O_MISC_HEARTBEAT_BACK_TTL		= 'misc-heartbeat_back_ttl';
+	const O_MISC_HEARTBEAT_EDITOR		= 'misc-heartbeat_editor';
+	const O_MISC_HEARTBEAT_EDITOR_TTL	= 'misc-heartbeat_editor_ttl';
 
 	## -------------------------------------------------- ##
 	## --------------		 CDN 		----------------- ##
 	## -------------------------------------------------- ##
-	const O_CDN 				= 'cdn' ;
-	const O_CDN_ORI 			= 'cdn-ori' ;
-	const O_CDN_ORI_DIR 		= 'cdn-ori_dir' ;
-	const O_CDN_EXC 			= 'cdn-exc' ;
-	const O_CDN_REMOTE_JQ 		= 'cdn-remote_jq' ;
-	const O_CDN_QUIC 			= 'cdn-quic' ;
-	const O_CDN_CLOUDFLARE 		= 'cdn-cloudflare' ;
-	const O_CDN_CLOUDFLARE_EMAIL= 'cdn-cloudflare_email' ;
-	const O_CDN_CLOUDFLARE_KEY 	= 'cdn-cloudflare_key' ;
-	const O_CDN_CLOUDFLARE_NAME = 'cdn-cloudflare_name' ;
-	const O_CDN_CLOUDFLARE_ZONE = 'cdn-cloudflare_zone' ;
+	const O_CDN 				= 'cdn';
+	const O_CDN_ORI 			= 'cdn-ori';
+	const O_CDN_ORI_DIR 		= 'cdn-ori_dir';
+	const O_CDN_EXC 			= 'cdn-exc';
+	const O_CDN_REMOTE_JQ 		= 'cdn-remote_jq';
+	const O_CDN_QUIC 			= 'cdn-quic';
+	const O_CDN_CLOUDFLARE 		= 'cdn-cloudflare';
+	const O_CDN_CLOUDFLARE_EMAIL= 'cdn-cloudflare_email';
+	const O_CDN_CLOUDFLARE_KEY 	= 'cdn-cloudflare_key';
+	const O_CDN_CLOUDFLARE_NAME = 'cdn-cloudflare_name';
+	const O_CDN_CLOUDFLARE_ZONE = 'cdn-cloudflare_zone';
 	const O_CDN_MAPPING 		= 'cdn-mapping';
 	const O_CDN_ATTR 			= 'cdn-attr';
 
-	const NETWORK_O_USE_PRIMARY = 'use_primary_settings' ;
+	const NETWORK_O_USE_PRIMARY = 'use_primary_settings';
 
 	/*** Other consts ***/
-	const O_GUIDE = 'litespeed-guide' ; // Array of each guidance tag as key, step as val //xx todo: may need to remove
+	const O_GUIDE = 'litespeed-guide'; // Array of each guidance tag as key, step as val //xx todo: may need to remove
 
 	// Server variables
-	const ENV_CRAWLER_USLEEP = 'CRAWLER_USLEEP' ;
-	const ENV_CRAWLER_LOAD_LIMIT = 'CRAWLER_LOAD_LIMIT' ;
-	const ENV_CRAWLER_LOAD_LIMIT_ENFORCE = 'CRAWLER_LOAD_LIMIT_ENFORCE' ;
+	const ENV_CRAWLER_USLEEP = 'CRAWLER_USLEEP';
+	const ENV_CRAWLER_LOAD_LIMIT = 'CRAWLER_LOAD_LIMIT';
+	const ENV_CRAWLER_LOAD_LIMIT_ENFORCE = 'CRAWLER_LOAD_LIMIT_ENFORCE';
 
-	// const O_FAVICON = 'litespeed-cache-favicon' ;
+	// const O_FAVICON = 'litespeed-cache-favicon';
 
-	const CRWL_COOKIE_NAME 		= 'name' ;
-	const CRWL_COOKIE_VALS 		= 'vals' ;
+	const CRWL_COOKIE_NAME 		= 'name';
+	const CRWL_COOKIE_VALS 		= 'vals';
 
 	const CDN_MAPPING_URL 		= 'url';
 	const CDN_MAPPING_INC_IMG 	= 'inc_img';
@@ -291,18 +294,19 @@ class Base extends Instance
 	const CDN_MAPPING_INC_JS 	= 'inc_js';
 	const CDN_MAPPING_FILETYPE 	= 'filetype';
 
-	const VAL_OFF 	= 0 ;
-	const VAL_ON 	= 1 ;
-	const VAL_ON2 	= 2 ;
+	const VAL_OFF 	= 0;
+	const VAL_ON 	= 1;
+	const VAL_ON2 	= 2;
 
 	/* This is for API hook usage */
-	const IMG_OPTM_BM_ORI 		= 1 ;
-	const IMG_OPTM_BM_WEBP 		= 2 ;
-	const IMG_OPTM_BM_LOSSLESS 	= 4 ;
-	const IMG_OPTM_BM_EXIF 		= 8 ;
+	const IMG_OPTM_BM_ORI 		= 1;
+	const IMG_OPTM_BM_WEBP 		= 2;
+	const IMG_OPTM_BM_LOSSLESS 	= 4;
+	const IMG_OPTM_BM_EXIF 		= 8;
 
 	/* Site related options (Will not overwrite other sites' config) */
 	protected static $SINGLE_SITE_OPTIONS = array(
+		self::O_API_KEY,
 		self::O_CRAWLER,
 		self::O_CRAWLER_SITEMAP,
 		self::O_CRAWLER_DROP_DOMAIN,
@@ -319,14 +323,14 @@ class Base extends Instance
 		self::O_CDN_CLOUDFLARE_ZONE,
 		self::O_CDN_MAPPING,
 		self::O_CDN_ATTR,
-	) ;
+	);
 
 	public static $CSS_FONT_DISPLAY_SET = array(
 		1 => 'block',
 		2 => 'swap',
 		3 => 'fallback',
 		4 => 'optional',
-	) ;
+	);
 
 	protected static $_default_options = array(
 		self::_VER 			=> '',
@@ -413,15 +417,16 @@ class Base extends Instance
 
 		// HTML Optm
 		self::O_OPTM_CSS_MIN 			=> false,
-		self::O_OPTM_CSS_INLINE_MIN 	=> false,
 		self::O_OPTM_CSS_COMB 			=> false,
-		self::O_OPTM_CSS_COMB_PRIO 		=> false,
+		self::O_OPTM_CSS_UNIQUE 		=> false,
+		self::O_OPTM_UCSS 				=> false,
+		self::O_OPTM_UCSS_ASYNC			=> false,
+		// self::O_OPTM_UCSS_WHITELIST		=> array(),
 		self::O_OPTM_CSS_HTTP2 			=> false,
 		self::O_OPTM_CSS_EXC 			=> array(),
 		self::O_OPTM_JS_MIN 			=> false,
-		self::O_OPTM_JS_INLINE_MIN 		=> false,
 		self::O_OPTM_JS_COMB 			=> false,
-		self::O_OPTM_JS_COMB_PRIO 		=> false,
+		self::O_OPTM_JS_COMB_EXT_INL	=> false,
 		self::O_OPTM_JS_HTTP2 			=> false,
 		self::O_OPTM_JS_EXC 			=> array(),
 		self::O_OPTM_TTL 				=> 0,
@@ -436,9 +441,8 @@ class Base extends Instance
 		self::O_OPTM_JS_DEFER 			=> false,
 		self::O_OPTM_JS_INLINE_DEFER	=> false,
 		self::O_OPTM_EMOJI_RM 			=> false,
-		self::O_OPTM_EXC_JQ 			=> false,
+		self::O_OPTM_NOSCRIPT_RM 		=> false,
 		self::O_OPTM_GGFONTS_ASYNC 		=> false,
-		self::O_OPTM_MAX_SIZE 			=> 0,
 		self::O_OPTM_RM_COMMENT 		=> false,
 		self::O_OPTM_EXC_ROLES			=> array(),
 		self::O_OPTM_CCSS_CON			=> '',
@@ -468,6 +472,8 @@ class Base extends Instance
 		self::O_DISCUSS_AVATAR_CACHE		=> false,
 		self::O_DISCUSS_AVATAR_CRON			=> false,
 		self::O_DISCUSS_AVATAR_CACHE_TTL	=> 0,
+		self::O_OPTM_LOCALIZE 			=> false,
+		self::O_OPTM_LOCALIZE_DOMAINS	=> array(),
 
 		// Media
 		self::O_MEDIA_LAZY 							=> false,
@@ -488,6 +494,7 @@ class Base extends Instance
 		self::O_MEDIA_IFRAME_LAZY_CLS_EXC 			=> array(),
 		self::O_MEDIA_IFRAME_LAZY_PARENT_CLS_EXC 	=> array(),
 		self::O_MEDIA_LAZY_URI_EXC 					=> array(),
+		self::O_MEDIA_LQIP_EXC 						=> array(),
 
 		// Image Optm
 		self::O_IMG_OPTM_AUTO 			=> false,
@@ -519,6 +526,7 @@ class Base extends Instance
 		self::O_CRAWLER_LOAD_LIMIT 		=> 0,
 		self::O_CRAWLER_SITEMAP 		=> '',
 		self::O_CRAWLER_DROP_DOMAIN		=> false,
+		self::O_CRAWLER_MAP_TIMEOUT		=> 0,
 		self::O_CRAWLER_ROLES			=> array(),
 		self::O_CRAWLER_COOKIES 		=> array(),
 
@@ -547,7 +555,7 @@ class Base extends Instance
 		self::O_CDN_MAPPING 		=> array(),
 		self::O_CDN_ATTR 			=> array(),
 
-	) ;
+	);
 
 	protected static $_default_site_options = array(
 		self::_VER 						=> '',
@@ -581,12 +589,23 @@ class Base extends Instance
 		self::O_OBJECT_GLOBAL_GROUPS	=> array(),
 		self::O_OBJECT_NON_PERSISTENT_GROUPS => array(),
 
+		// Debug
+		self::O_DEBUG_DISABLE_ALL 		=> false,
+		self::O_DEBUG 					=> false,
+		self::O_DEBUG_IPS 				=> array(),
+		self::O_DEBUG_LEVEL 			=> false,
+		self::O_DEBUG_FILESIZE 			=> 0,
+		self::O_DEBUG_COOKIE 			=> false,
+		self::O_DEBUG_COLLAPS_QS 		=> false,
+		self::O_DEBUG_INC 				=> array(),
+		self::O_DEBUG_EXC 				=> array(),
+
 		self::O_IMG_OPTM_WEBP_REPLACE 	=> false,
 
 		self::O_MISC_HTACCESS_FRONT 	=> '',
 		self::O_MISC_HTACCESS_BACK		=> '',
 
-	) ;
+	);
 
 	// NOTE: all the val of following items will be int while not bool
 	protected static $_multi_switch_list = array(
@@ -595,7 +614,7 @@ class Base extends Instance
 		self::O_OPTM_CSS_FONT_DISPLAY 	=> 4,
 		self::O_OPTM_JS_INLINE_DEFER 	=> 2,
 		self::O_CRAWLER_ORDER_LINKS 	=> 3,
-	) ;
+	);
 
 
 	/**
@@ -605,10 +624,16 @@ class Base extends Instance
 	 *
 	 * @since  3.0.3
 	 */
-	protected function type_casting( $val, $id, $is_site_conf = false )
-	{
+	protected function type_casting( $val, $id, $is_site_conf = false ) {
 		$default_v = ! $is_site_conf ? self::$_default_options[ $id ] : self::$_default_site_options[ $id ];
 		if ( is_bool( $default_v ) ) {
+			if ( $val === 'true' ) {
+				$val = true;
+			}
+			if ( $val === 'false' ) {
+				$val = false;
+			}
+
 			$max = $this->_conf_multi_switch( $id );
 			if ( $max ) {
 				$val = (int) $val;
@@ -640,14 +665,13 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function load_default_site_vals()
-	{
+	public function load_default_site_vals() {
 		// Load network_default.ini
 		if ( file_exists( LSCWP_DIR . 'data/const.network_default.ini' ) ) {
-			$default_ini_cfg = parse_ini_file( LSCWP_DIR . 'data/const.network_default.ini', true ) ;
+			$default_ini_cfg = parse_ini_file( LSCWP_DIR . 'data/const.network_default.ini', true );
 			foreach ( self::$_default_site_options as $k => $v ) {
 				if ( ! array_key_exists( $k, $default_ini_cfg ) ) {
-					continue ;
+					continue;
 				}
 
 				// Parse value in ini file
@@ -662,9 +686,9 @@ class Base extends Instance
 			}
 		}
 
-		self::$_default_site_options[ self::_VER ] = Core::VER ;
+		self::$_default_site_options[ self::_VER ] = Core::VER;
 
-		return self::$_default_site_options ;
+		return self::$_default_site_options;
 	}
 
 	/**
@@ -673,14 +697,13 @@ class Base extends Instance
 	 * @since 3.0
 	 * @access public
 	 */
-	public function load_default_vals()
-	{
+	public function load_default_vals() {
 		// Load default.ini
 		if ( file_exists( LSCWP_DIR . 'data/const.default.ini' ) ) {
-			$default_ini_cfg = parse_ini_file( LSCWP_DIR . 'data/const.default.ini', true ) ;
+			$default_ini_cfg = parse_ini_file( LSCWP_DIR . 'data/const.default.ini', true );
 			foreach ( self::$_default_options as $k => $v ) {
 				if ( ! array_key_exists( $k, $default_ini_cfg ) ) {
-					continue ;
+					continue;
 				}
 
 				// Parse value in ini file
@@ -735,23 +758,23 @@ class Base extends Instance
 
 		// Load internal default vals
 		// Setting the default bool to int is also to avoid type casting override it back to bool
-		self::$_default_options[ self::O_CACHE ] = is_multisite() ? self::VAL_ON2 : self::VAL_ON ; //For multi site, default is 2 (Use Network Admin Settings). For single site, default is 1 (Enabled).
+		self::$_default_options[ self::O_CACHE ] = is_multisite() ? self::VAL_ON2 : self::VAL_ON; //For multi site, default is 2 (Use Network Admin Settings). For single site, default is 1 (Enabled).
 
 		// Load default vals containing variables
 		if ( ! self::$_default_options[ self::O_CDN_ORI_DIR ] ) {
-			self::$_default_options[ self::O_CDN_ORI_DIR ] = LSCWP_CONTENT_FOLDER . "\nwp-includes" ;
-			self::$_default_options[ self::O_CDN_ORI_DIR ] = explode( "\n", self::$_default_options[ self::O_CDN_ORI_DIR ] ) ;
-			self::$_default_options[ self::O_CDN_ORI_DIR ] = array_map( 'trim', self::$_default_options[ self::O_CDN_ORI_DIR ] ) ;
+			self::$_default_options[ self::O_CDN_ORI_DIR ] = LSCWP_CONTENT_FOLDER . "\nwp-includes";
+			self::$_default_options[ self::O_CDN_ORI_DIR ] = explode( "\n", self::$_default_options[ self::O_CDN_ORI_DIR ] );
+			self::$_default_options[ self::O_CDN_ORI_DIR ] = array_map( 'trim', self::$_default_options[ self::O_CDN_ORI_DIR ] );
 		}
 
 		// Set security key if not initialized yet
 		if ( ! self::$_default_options[ self::HASH ] ) {
-			self::$_default_options[ self::HASH ] = Str::rrand( 32 ) ;
+			self::$_default_options[ self::HASH ] = Str::rrand( 32 );
 		}
 
-		self::$_default_options[ self::_VER ] = Core::VER ;
+		self::$_default_options[ self::_VER ] = Core::VER;
 
-		return self::$_default_options ;
+		return self::$_default_options;
 	}
 
 	/**
@@ -759,8 +782,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_string_val( $id, $val )
-	{
+	protected function _conf_string_val( $id, $val ) {
 		return $val;
 	}
 
@@ -769,8 +791,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_multi_switch( $id )
-	{
+	protected function _conf_multi_switch( $id ) {
 		if ( ! empty( self::$_multi_switch_list[ $id ] ) ) {
 			return self::$_multi_switch_list[ $id ];
 		}
@@ -787,9 +808,8 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	public static function set_multi_switch( $id, $v )
-	{
-		self::$_multi_switch_list[ $id ] = $v ;
+	public static function set_multi_switch( $id, $v ) {
+		self::$_multi_switch_list[ $id ] = $v;
 	}
 
 	/**
@@ -797,8 +817,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	public static function conf_const( $id )
-	{
+	public static function conf_const( $id ) {
 		return 'LITESPEED_CONF__' . strtoupper( str_replace( '-', '__', $id ) );
 	}
 
@@ -807,8 +826,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_filter( $id )
-	{
+	protected function _conf_filter( $id ) {
 		$filters = array(
 			self::O_MEDIA_LAZY_EXC		=> 'uri',
 			self::O_DEBUG_INC			=> 'relative',
@@ -825,6 +843,8 @@ class Base extends Instance
 			self::O_OPTM_JS_DEFER_EXC	=> 'uri',
 			self::O_OPTM_DNS_PREFETCH	=> 'domain',
 			self::O_OPTM_CCSS_SEP_URI	=> 'uri',
+			self::O_CDN_ORI				=> 'noprotocol', // `Original URLs`
+			// self::O_OPTM_LOCALIZE_DOMAINS	=> 'noprotocol', // `Localize Resources`
 			// self::	=> '',
 			// self::	=> '',
 		);
@@ -841,8 +861,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_purge( $id )
-	{
+	protected function _conf_purge( $id ) {
 		$check_ids = array(
 			self::O_MEDIA_LAZY_URI_EXC,
 			self::O_OPTM_EXC,
@@ -861,8 +880,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_purge_all( $id )
-	{
+	protected function _conf_purge_all( $id ) {
 		$check_ids = array(
 			self::O_CACHE,
 			self::O_ESI,
@@ -878,8 +896,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_pswd( $id )
-	{
+	protected function _conf_pswd( $id ) {
 		$check_ids = array(
 			self::O_CDN_CLOUDFLARE_KEY,
 			self::O_OBJECT_PSWD,
@@ -894,8 +911,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_cron( $id )
-	{
+	protected function _conf_cron( $id ) {
 		$check_ids = array(
 			self::O_IMG_OPTM_CRON,
 			self::O_OPTM_CCSS_ASYNC,
@@ -913,8 +929,7 @@ class Base extends Instance
 	 *
 	 * @since  3.0
 	 */
-	protected function _conf_purge_tag( $id )
-	{
+	protected function _conf_purge_tag( $id ) {
 		$check_ids = array(
 			self::O_CACHE_PAGE_LOGIN	=> Tag::TYPE_LOGIN,
 		);
@@ -931,8 +946,7 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function name( $id )
-	{
+	public static function name( $id ) {
 		$cls = new \ReflectionClass( get_called_class() );
 		return 'litespeed.' . strtolower( $cls->getShortName() ) . '.' . $id;
 	}
@@ -942,9 +956,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function get_option( $id, $default_v = false )
-	{
-		return get_option( self::name( $id ), $default_v ) ;
+	public static function get_option( $id, $default_v = false ) {
+		return get_option( self::name( $id ), $default_v );
 	}
 
 	/**
@@ -952,9 +965,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function get_site_option( $id, $default_v = false )
-	{
-		return get_site_option( self::name( $id ), $default_v ) ;
+	public static function get_site_option( $id, $default_v = false ) {
+		return get_site_option( self::name( $id ), $default_v );
 	}
 
 	/**
@@ -962,9 +974,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function get_blog_option( $blog_id, $id, $default_v = false )
-	{
-		return get_blog_option( $blog_id, self::name( $id ), $default_v ) ;
+	public static function get_blog_option( $blog_id, $id, $default_v = false ) {
+		return get_blog_option( $blog_id, self::name( $id ), $default_v );
 	}
 
 	/**
@@ -972,9 +983,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function add_option( $id, $v )
-	{
-		add_option( self::name( $id ), $v ) ;
+	public static function add_option( $id, $v ) {
+		add_option( self::name( $id ), $v );
 	}
 
 	/**
@@ -982,9 +992,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function add_site_option( $id, $v )
-	{
-		add_site_option( self::name( $id ), $v ) ;
+	public static function add_site_option( $id, $v ) {
+		add_site_option( self::name( $id ), $v );
 	}
 
 	/**
@@ -992,9 +1001,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function update_option( $id, $v )
-	{
-		update_option( self::name( $id ), $v ) ;
+	public static function update_option( $id, $v ) {
+		update_option( self::name( $id ), $v );
 	}
 
 	/**
@@ -1002,9 +1010,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function update_site_option( $id, $v )
-	{
-		update_site_option( self::name( $id ), $v ) ;
+	public static function update_site_option( $id, $v ) {
+		update_site_option( self::name( $id ), $v );
 	}
 
 	/**
@@ -1012,9 +1019,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function delete_option( $id )
-	{
-		delete_option( self::name( $id ) ) ;
+	public static function delete_option( $id ) {
+		delete_option( self::name( $id ) );
 	}
 
 	/**
@@ -1022,9 +1028,8 @@ class Base extends Instance
 	 *
 	 * @since 3.0
 	 */
-	public static function delete_site_option( $id )
-	{
-		delete_site_option( self::name( $id ) ) ;
+	public static function delete_site_option( $id ) {
+		delete_site_option( self::name( $id ) );
 	}
 
 	/**
@@ -1033,9 +1038,12 @@ class Base extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public static function get_summary( $field = false )
-	{
+	public static function get_summary( $field = false ) {
 		$summary = self::get_option( '_summary', array() );
+
+		if ( ! is_array( $summary ) ) {
+			$summary = array();
+		}
 
 		if ( ! $field ) {
 			return $summary;
@@ -1054,13 +1062,12 @@ class Base extends Instance
 	 * @since  3.0
 	 * @access public
 	 */
-	public static function save_summary( $data = null )
-	{
+	public static function save_summary( $data = null ) {
 		if ( $data === null ) {
 			$data = static::get_instance()->_summary;
 		}
 
-		self::update_option( '_summary', $data ) ;
+		self::update_option( '_summary', $data );
 	}
 
 	/**
@@ -1068,8 +1075,7 @@ class Base extends Instance
 	 *
 	 * @since 2.4.1
 	 */
-	public function server_vars()
-	{
+	public function server_vars() {
 		$consts = array(
 			'WP_SITEURL',
 			'WP_HOME',
@@ -1085,13 +1091,13 @@ class Base extends Instance
 			'LITESPEED_ON',
 			'LSWCP_TAG_PREFIX',
 			'COOKIEHASH',
-		) ;
-		$server_vars = array() ;
+		);
+		$server_vars = array();
 		foreach ( $consts as $v ) {
-			$server_vars[ $v ] = defined( $v ) ? constant( $v ) : NULL ;
+			$server_vars[ $v ] = defined( $v ) ? constant( $v ) : NULL;
 		}
 
-		return $server_vars ;
+		return $server_vars;
 	}
 
 }

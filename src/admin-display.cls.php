@@ -8,35 +8,34 @@
  * @subpackage LiteSpeed/admin
  * @author     LiteSpeed Technologies <info@litespeedtech.com>
  */
-namespace LiteSpeed ;
+namespace LiteSpeed;
 
-defined( 'WPINC' ) || exit ;
+defined( 'WPINC' ) || exit;
 
-class Admin_Display extends Base
-{
-	protected static $_instance ;
+class Admin_Display extends Base {
+	protected static $_instance;
 
-	const NOTICE_BLUE = 'notice notice-info' ;
-	const NOTICE_GREEN = 'notice notice-success' ;
-	const NOTICE_RED = 'notice notice-error' ;
-	const NOTICE_YELLOW = 'notice notice-warning' ;
-	const DB_MSG = 'messages' ;
+	const NOTICE_BLUE = 'notice notice-info';
+	const NOTICE_GREEN = 'notice notice-success';
+	const NOTICE_RED = 'notice notice-error';
+	const NOTICE_YELLOW = 'notice notice-warning';
+	const DB_MSG = 'messages';
 
-	const PURGEBY_CAT = '0' ;
-	const PURGEBY_PID = '1' ;
-	const PURGEBY_TAG = '2' ;
-	const PURGEBY_URL = '3' ;
+	const PURGEBY_CAT = '0';
+	const PURGEBY_PID = '1';
+	const PURGEBY_TAG = '2';
+	const PURGEBY_URL = '3';
 
-	const PURGEBYOPT_SELECT = 'purgeby' ;
-	const PURGEBYOPT_LIST = 'purgebylist' ;
+	const PURGEBYOPT_SELECT = 'purgeby';
+	const PURGEBYOPT_LIST = 'purgebylist';
 
-	const DB_DISMISS_MSG = 'dismiss' ;
-	const RULECONFLICT_ON = 'ExpiresDefault_1' ;
-	const RULECONFLICT_DISMISSED = 'ExpiresDefault_0' ;
+	const DB_DISMISS_MSG = 'dismiss';
+	const RULECONFLICT_ON = 'ExpiresDefault_1';
+	const RULECONFLICT_DISMISSED = 'ExpiresDefault_0';
 
-	protected $__cfg ;
-	protected $messages = array() ;
-	protected $default_settings = array() ;
+	protected $__cfg;
+	protected $messages = array();
+	protected $default_settings = array();
 	protected $_is_network_admin = false;
 	protected $_is_multisite = false;
 
@@ -46,36 +45,35 @@ class Admin_Display extends Base
 	 * @since    1.0.7
 	 * @access   protected
 	 */
-	protected function __construct()
-	{
+	protected function __construct() {
 		// load assets
 		if( ! empty( $_GET[ 'page' ] ) && ( strpos( $_GET[ 'page' ], 'litespeed-' ) === 0 || $_GET[ 'page' ] == 'litespeed' ) ) {
-			add_action( 'admin_enqueue_scripts', array( $this, 'load_assets' ) ) ;
+			add_action( 'admin_enqueue_scripts', array( $this, 'load_assets' ) );
 		}
 
 		// main css
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_style' ) ) ;
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_style' ) );
 		// Main js
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) ) ;
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-		$this->_is_network_admin = is_network_admin() ;
-		$this->_is_multisite = is_multisite() ;
+		$this->_is_network_admin = is_network_admin();
+		$this->_is_multisite = is_multisite();
 
 		// Quick access menu
 		if ( is_multisite() && $this->_is_network_admin ) {
-			$manage = 'manage_network_options' ;
+			$manage = 'manage_network_options';
 		}
 		else {
-			$manage = 'manage_options' ;
+			$manage = 'manage_options';
 		}
 		if ( current_user_can( $manage ) ) {
 			if ( ! defined( 'LITESPEED_DISABLE_ALL' ) ) {
-				add_action( 'wp_before_admin_bar_render', array( GUI::get_instance(), 'backend_shortcut' ) ) ;
+				add_action( 'wp_before_admin_bar_render', array( GUI::get_instance(), 'backend_shortcut' ) );
 			}
 
 			// `admin_notices` is after `admin_enqueue_scripts`
 			// @see wp-admin/admin-header.php
-			add_action( $this->_is_network_admin ? 'network_admin_notices' : 'admin_notices', array( $this, 'display_messages' ) ) ;
+			add_action( $this->_is_network_admin ? 'network_admin_notices' : 'admin_notices', array( $this, 'display_messages' ) );
 		}
 
 		/**
@@ -84,18 +82,18 @@ class Admin_Display extends Base
 		 * @since  2.0
 		 */
 		if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
-			require_once( ABSPATH . '/wp-admin/includes/plugin.php' ) ;
+			require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
 		}
 
 		// add menus ( Also check for mu-plugins)
 		if ( $this->_is_network_admin && ( is_plugin_active_for_network( LSCWP_BASENAME ) || defined( 'LSCWP_MU_PLUGIN' ) ) ) {
-			add_action( 'network_admin_menu', array( $this, 'register_admin_menu' ) ) ;
+			add_action( 'network_admin_menu', array( $this, 'register_admin_menu' ) );
 		}
 		else {
-			add_action( 'admin_menu', array( $this, 'register_admin_menu' ) ) ;
+			add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		}
 
-		$this->__cfg = Conf::get_instance() ;
+		$this->__cfg = Conf::get_instance();
 	}
 
 	/**
@@ -105,24 +103,23 @@ class Admin_Display extends Base
 	 * @access public
 	 * @param  array $hook WP hook
 	 */
-	public function load_assets($hook)
-	{
+	public function load_assets($hook) {
 		// Admin footer
-		add_filter('admin_footer_text', array($this, 'admin_footer_text'), 1) ;
+		add_filter('admin_footer_text', array($this, 'admin_footer_text'), 1);
 
 		if( defined( 'LITESPEED_ON' ) ) {
 			// Help tab
-			$this->add_help_tabs() ;
+			$this->add_help_tabs();
 
-			global $pagenow ;
+			global $pagenow;
 			if ( $pagenow === 'plugins.php' ) {//todo: check if work
-				add_action('wp_default_scripts', array($this, 'set_update_text'), 0) ;
-				add_action('wp_default_scripts', array($this, 'unset_update_text'), 20) ;
+				add_action('wp_default_scripts', array($this, 'set_update_text'), 0);
+				add_action('wp_default_scripts', array($this, 'unset_update_text'), 20);
 			}
 		}
 
-		wp_register_script( Core::PLUGIN_NAME . '-lib-vue', LSWCP_PLUGIN_URL . 'assets/js/vue.min.js', array(), Core::VER, false ) ;
-		wp_enqueue_script( Core::PLUGIN_NAME . '-lib-vue' ) ;
+		wp_register_script( Core::PLUGIN_NAME . '-lib-vue', LSWCP_PLUGIN_URL . 'assets/js/vue.min.js', array(), Core::VER, false );
+		wp_enqueue_script( Core::PLUGIN_NAME . '-lib-vue' );
 	}
 
 	/**
@@ -131,9 +128,8 @@ class Admin_Display extends Base
 	 * @since  3.0
 	 * @access public
 	 */
-	public function title( $id )
-	{
-		echo Lang::title( $id ) ;
+	public function title( $id ) {
+		echo Lang::title( $id );
 	}
 
 	/**
@@ -142,8 +138,7 @@ class Admin_Display extends Base
 	 * @since    1.0.0
 	 * @access public
 	 */
-	public function register_admin_menu()
-	{
+	public function register_admin_menu() {
 		$capability = $this->_is_network_admin ? 'manage_network_options' : 'manage_options';
 		if ( current_user_can( $capability ) ) {
 
@@ -183,8 +178,7 @@ class Admin_Display extends Base
 	 * @param string $menu_slug The slug of the page.
 	 * @param string $callback The callback to call if selected.
 	 */
-	private function _add_submenu( $menu_title, $menu_slug, $callback )
-	{
+	private function _add_submenu( $menu_title, $menu_slug, $callback ) {
 		add_submenu_page( 'litespeed', $menu_title, $menu_title, 'manage_options', $menu_slug, array( $this, $callback ) );
 	}
 
@@ -194,9 +188,8 @@ class Admin_Display extends Base
 	 * @since    1.0.14
 	 * @access public
 	 */
-	public function enqueue_style()
-	{
-		wp_enqueue_style(Core::PLUGIN_NAME, LSWCP_PLUGIN_URL . 'assets/css/litespeed.css', array(), Core::VER, 'all') ;
+	public function enqueue_style() {
+		wp_enqueue_style(Core::PLUGIN_NAME, LSWCP_PLUGIN_URL . 'assets/css/litespeed.css', array(), Core::VER, 'all');
 	}
 
 	/**
@@ -205,39 +198,38 @@ class Admin_Display extends Base
 	 * @since    1.0.0
 	 * @access public
 	 */
-	public function enqueue_scripts()
-	{
-		wp_register_script( Core::PLUGIN_NAME, LSWCP_PLUGIN_URL . 'assets/js/litespeed-cache-admin.js', array(), Core::VER, false ) ;
+	public function enqueue_scripts() {
+		wp_register_script( Core::PLUGIN_NAME, LSWCP_PLUGIN_URL . 'assets/js/litespeed-cache-admin.js', array(), Core::VER, false );
 
-		$localize_data = array() ;
+		$localize_data = array();
 		if ( GUI::has_whm_msg() ) {
-			$ajax_url_dismiss_whm = Utility::build_url( Core::ACTION_DISMISS, GUI::TYPE_DISMISS_WHM, true ) ;
-			$localize_data[ 'ajax_url_dismiss_whm' ] = $ajax_url_dismiss_whm ;
+			$ajax_url_dismiss_whm = Utility::build_url( Core::ACTION_DISMISS, GUI::TYPE_DISMISS_WHM, true );
+			$localize_data[ 'ajax_url_dismiss_whm' ] = $ajax_url_dismiss_whm;
 		}
 
 		if ( GUI::has_msg_ruleconflict() ) {
-			$ajax_url = Utility::build_url( Core::ACTION_DISMISS, GUI::TYPE_DISMISS_EXPIRESDEFAULT, true ) ;
-			$localize_data[ 'ajax_url_dismiss_ruleconflict' ] = $ajax_url ;
+			$ajax_url = Utility::build_url( Core::ACTION_DISMISS, GUI::TYPE_DISMISS_EXPIRESDEFAULT, true );
+			$localize_data[ 'ajax_url_dismiss_ruleconflict' ] = $ajax_url;
 		}
 
-		$promo_tag = GUI::get_instance()->show_promo( true ) ;
+		$promo_tag = GUI::get_instance()->show_promo( true );
 		if ( $promo_tag ) {
-			$ajax_url_promo = Utility::build_url( Core::ACTION_DISMISS, GUI::TYPE_DISMISS_PROMO, true, null, array( 'promo_tag' => $promo_tag ) ) ;
-			$localize_data[ 'ajax_url_promo' ] = $ajax_url_promo ;
+			$ajax_url_promo = Utility::build_url( Core::ACTION_DISMISS, GUI::TYPE_DISMISS_PROMO, true, null, array( 'promo_tag' => $promo_tag ) );
+			$localize_data[ 'ajax_url_promo' ] = $ajax_url_promo;
 		}
 
-		// If on crawler page, append getIP link
+		// If on Server IP setting page, append getIP link
 		global $pagenow;
-		if ( $pagenow == 'admin.php' && ! empty( $_GET[ 'page' ] ) && $_GET[ 'page' ] == 'litespeed-crawler' ) {
-			$localize_data[ 'ajax_url_getIP' ] = function_exists( 'get_rest_url' ) ? get_rest_url( null, 'litespeed/v1/tool/check_ip' ) : '/' ;
+		if ( $pagenow == 'admin.php' && ! empty( $_GET[ 'page' ] ) && $_GET[ 'page' ] == 'litespeed-general' ) {
+			$localize_data[ 'ajax_url_getIP' ] = function_exists( 'get_rest_url' ) ? get_rest_url( null, 'litespeed/v1/tool/check_ip' ) : '/';
 			$localize_data[ 'nonce' ] = wp_create_nonce( 'wp_rest' );
 		}
 
 		if ( $localize_data ) {
-			wp_localize_script(Core::PLUGIN_NAME, 'litespeed_data', $localize_data ) ;
+			wp_localize_script(Core::PLUGIN_NAME, 'litespeed_data', $localize_data );
 		}
 
-		wp_enqueue_script( Core::PLUGIN_NAME ) ;
+		wp_enqueue_script( Core::PLUGIN_NAME );
 	}
 
 	/**
@@ -248,12 +240,11 @@ class Admin_Display extends Base
 	 * @param array $links Previously added links from other plugins.
 	 * @return array Links array with the litespeed cache one appended.
 	 */
-	public function add_plugin_links($links)
-	{
-		// $links[] = '<a href="' . admin_url('options-general.php?page=litespeed-cache') . '">' . __('Settings', 'litespeed-cache') . '</a>' ;
-		$links[] = '<a href="' . admin_url('admin.php?page=litespeed-cache') . '">' . __('Settings', 'litespeed-cache') . '</a>' ;
+	public function add_plugin_links($links) {
+		// $links[] = '<a href="' . admin_url('options-general.php?page=litespeed-cache') . '">' . __('Settings', 'litespeed-cache') . '</a>';
+		$links[] = '<a href="' . admin_url('admin.php?page=litespeed-cache') . '">' . __('Settings', 'litespeed-cache') . '</a>';
 
-		return $links ;
+		return $links;
 	}
 
 	/**
@@ -265,13 +256,12 @@ class Admin_Display extends Base
 	 * @param string $text
 	 * @return string
 	 */
-	public function add_update_text($translations, $text)
-	{
+	public function add_update_text($translations, $text) {
 		if ( $text !== 'Updated!' ) {
-			return $translations ;
+			return $translations;
 		}
 
-		return $translations . ' ' . __('It is recommended that LiteSpeed Cache be purged after updating a plugin.', 'litespeed-cache') ;
+		return $translations . ' ' . __('It is recommended that LiteSpeed Cache be purged after updating a plugin.', 'litespeed-cache');
 	}
 
 	/**
@@ -280,9 +270,8 @@ class Admin_Display extends Base
 	 * @since 1.0.8.1
 	 * @access public
 	 */
-	public function set_update_text()
-	{
-		add_filter('gettext', array($this, 'add_update_text'), 10, 2) ;
+	public function set_update_text() {
+		add_filter('gettext', array($this, 'add_update_text'), 10, 2);
 	}
 
 	/**
@@ -291,9 +280,8 @@ class Admin_Display extends Base
 	 * @since 1.0.8.1
 	 * @access public
 	 */
-	public function unset_update_text()
-	{
-		remove_filter('gettext', array($this, 'add_update_text')) ;
+	public function unset_update_text() {
+		remove_filter('gettext', array($this, 'add_update_text'));
 	}
 
 	/**
@@ -303,11 +291,10 @@ class Admin_Display extends Base
 	 * @param  string $footer_text
 	 * @return string
 	 */
-	public function admin_footer_text($footer_text)
-	{
-		require_once LSCWP_DIR . 'tpl/inc/admin_footer.php' ;
+	public function admin_footer_text($footer_text) {
+		require_once LSCWP_DIR . 'tpl/inc/admin_footer.php';
 
-		return $footer_text ;
+		return $footer_text;
 	}
 
 	/**
@@ -316,9 +303,8 @@ class Admin_Display extends Base
 	 * @since 1.0.0
 	 * @access public
 	 */
-	public function add_help_tabs()
-	{
-		require_once LSCWP_DIR . 'tpl/inc/help_tabs.php' ;
+	public function add_help_tabs() {
+		require_once LSCWP_DIR . 'tpl/inc/help_tabs.php';
 	}
 
 	/**
@@ -330,9 +316,8 @@ class Admin_Display extends Base
 	 * @param string $str The notice message.
 	 * @return string The built notice html.
 	 */
-	public static function build_notice($color, $str)
-	{
-		return '<div class="' . $color . ' is-dismissible"><p>'. $str . '</p></div>' ;
+	public static function build_notice($color, $str) {
+		return '<div class="' . $color . ' is-dismissible"><p>'. $str . '</p></div>';
 	}
 
 	/**
@@ -341,8 +326,7 @@ class Admin_Display extends Base
 	 * @since 1.6.5
 	 * @access public
 	 */
-	public static function info( $msg, $echo = false )
-	{
+	public static function info( $msg, $echo = false ) {
 		self::add_notice( self::NOTICE_BLUE, $msg, $echo );
 	}
 
@@ -352,8 +336,7 @@ class Admin_Display extends Base
 	 * @since 1.6.5
 	 * @access public
 	 */
-	public static function note( $msg, $echo = false )
-	{
+	public static function note( $msg, $echo = false ) {
 		self::add_notice( self::NOTICE_YELLOW, $msg, $echo );
 	}
 
@@ -363,8 +346,7 @@ class Admin_Display extends Base
 	 * @since 1.6
 	 * @access public
 	 */
-	public static function succeed( $msg, $echo = false )
-	{
+	public static function succeed( $msg, $echo = false ) {
 		self::add_notice( self::NOTICE_GREEN, $msg, $echo );
 	}
 
@@ -374,8 +356,7 @@ class Admin_Display extends Base
 	 * @since 1.6
 	 * @access public
 	 */
-	public static function error( $msg, $echo = false )
-	{
+	public static function error( $msg, $echo = false ) {
 		self::add_notice( self::NOTICE_RED, $msg, $echo );
 	}
 
@@ -385,15 +366,14 @@ class Admin_Display extends Base
 	 * @since 1.0.7
 	 * @access public
 	 */
-	public static function add_notice( $color, $msg, $echo = false )
-	{
+	public static function add_notice( $color, $msg, $echo = false ) {
 		// Bypass adding for CLI or cron
 		if ( defined( 'LITESPEED_CLI' ) || defined( 'DOING_CRON' ) ) {
 			// WP CLI will show the info directly
 			if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$msg = strip_tags( $msg );
 				if ( $color == self::NOTICE_RED ) {
-					\WP_CLI::error( $msg );
+					\WP_CLI::error( $msg, false );
 				}
 				else {
 					\WP_CLI::success( $msg );
@@ -426,8 +406,7 @@ class Admin_Display extends Base
 	 * @since 1.1.0
 	 * @access public
 	 */
-	public function display_messages()
-	{
+	public function display_messages() {
 		if ( GUI::has_whm_msg() ) {
 			$this->show_display_installed();
 		}
@@ -447,12 +426,12 @@ class Admin_Display extends Base
 				// Added for popup links
 				if ( strpos( $msg, 'TB_iframe' ) && ! $added_thickbox ) {
 					add_thickbox();
-					$added_thickbox = true ;
+					$added_thickbox = true;
 				}
-				echo $msg ;
+				echo $msg;
 			}
 		}
-		self::delete_option( self::DB_MSG ) ;
+		self::delete_option( self::DB_MSG );
 
 		if( empty( $_GET[ 'page' ] ) || strpos( $_GET[ 'page' ], 'litespeed' ) !== 0 ) {
 			global $pagenow;
@@ -477,7 +456,7 @@ class Admin_Display extends Base
 		 * Check promo msg first
 		 * @since 2.9
 		 */
-		GUI::get_instance()->show_promo() ;
+		GUI::get_instance()->show_promo();
 
 		// Show version news
 		Cloud::get_instance()->news();
@@ -491,8 +470,7 @@ class Admin_Display extends Base
 	 * @since 1.1.0
 	 * @access public
 	 */
-	public function show_widget_edit($widget, $return, $instance)
-	{
+	public function show_widget_edit($widget, $return, $instance) {
 		require LSCWP_DIR . 'tpl/esi_widget_edit.php';
 	}
 
@@ -502,9 +480,8 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function show_menu_dash()
-	{
-		require_once LSCWP_DIR . 'tpl/dash/entry.tpl.php' ;
+	public function show_menu_dash() {
+		require_once LSCWP_DIR . 'tpl/dash/entry.tpl.php';
 	}
 
 	/**
@@ -513,9 +490,8 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function show_menu_general()
-	{
-		require_once LSCWP_DIR . 'tpl/general/entry.tpl.php' ;
+	public function show_menu_general() {
+		require_once LSCWP_DIR . 'tpl/general/entry.tpl.php';
 	}
 
 	/**
@@ -524,9 +500,8 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function show_menu_cdn()
-	{
-		require_once LSCWP_DIR . 'tpl/cdn/entry.tpl.php' ;
+	public function show_menu_cdn() {
+		require_once LSCWP_DIR . 'tpl/cdn/entry.tpl.php';
 	}
 
 	/**
@@ -535,13 +510,12 @@ class Admin_Display extends Base
 	 * @since 1.0.0
 	 * @access public
 	 */
-	public function show_menu_cache()
-	{
+	public function show_menu_cache() {
 		if ( $this->_is_network_admin ) {
-			require_once LSCWP_DIR . 'tpl/cache/entry_network.tpl.php' ;
+			require_once LSCWP_DIR . 'tpl/cache/entry_network.tpl.php';
 		}
 		else {
-			require_once LSCWP_DIR . 'tpl/cache/entry.tpl.php' ;
+			require_once LSCWP_DIR . 'tpl/cache/entry.tpl.php';
 		}
 	}
 
@@ -551,9 +525,8 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function show_toolbox()
-	{
-		require_once LSCWP_DIR . 'tpl/toolbox/entry.tpl.php' ;
+	public function show_toolbox() {
+		require_once LSCWP_DIR . 'tpl/toolbox/entry.tpl.php';
 	}
 
 	/**
@@ -562,9 +535,8 @@ class Admin_Display extends Base
 	 * @since 1.1.0
 	 * @access public
 	 */
-	public function show_crawler()
-	{
-		require_once LSCWP_DIR . 'tpl/crawler/entry.tpl.php' ;
+	public function show_crawler() {
+		require_once LSCWP_DIR . 'tpl/crawler/entry.tpl.php';
 	}
 
 	/**
@@ -573,9 +545,8 @@ class Admin_Display extends Base
 	 * @since 1.6
 	 * @access public
 	 */
-	public function show_img_optm()
-	{
-		require_once LSCWP_DIR . 'tpl/img_optm/entry.tpl.php' ;
+	public function show_img_optm() {
+		require_once LSCWP_DIR . 'tpl/img_optm/entry.tpl.php';
 	}
 
 	/**
@@ -584,9 +555,8 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function show_page_optm()
-	{
-		require_once LSCWP_DIR . 'tpl/page_optm/entry.tpl.php' ;
+	public function show_page_optm() {
+		require_once LSCWP_DIR . 'tpl/page_optm/entry.tpl.php';
 	}
 
 	/**
@@ -595,9 +565,8 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function show_db_optm()
-	{
-		require_once LSCWP_DIR . 'tpl/db_optm/entry.tpl.php' ;
+	public function show_db_optm() {
+		require_once LSCWP_DIR . 'tpl/db_optm/entry.tpl.php';
 	}
 
 	/**
@@ -607,9 +576,8 @@ class Admin_Display extends Base
 	 * @since 1.0.12
 	 * @access public
 	 */
-	public function show_display_installed()
-	{
-		require_once LSCWP_DIR . 'tpl/inc/show_display_installed.php' ;
+	public function show_display_installed() {
+		require_once LSCWP_DIR . 'tpl/inc/show_display_installed.php';
 	}
 
 	/**
@@ -618,9 +586,8 @@ class Admin_Display extends Base
 	 * @since 1.0.12
 	 * @access public
 	 */
-	public static function show_error_cookie()
-	{
-		require_once LSCWP_DIR . 'tpl/inc/show_error_cookie.php' ;
+	public static function show_error_cookie() {
+		require_once LSCWP_DIR . 'tpl/inc/show_error_cookie.php';
 	}
 
 	/**
@@ -629,9 +596,8 @@ class Admin_Display extends Base
 	 * @since 2.1
 	 * @access public
 	 */
-	public function cache_disabled_warning()
-	{
-		include LSCWP_DIR . "tpl/inc/check_cache_disabled.php" ;
+	public function cache_disabled_warning() {
+		include LSCWP_DIR . "tpl/inc/check_cache_disabled.php";
 	}
 
 	/**
@@ -640,21 +606,20 @@ class Admin_Display extends Base
 	 * @since    3.0
 	 * @access public
 	 */
-	public function form_action( $action = false, $type = false, $has_upload = false )
-	{
+	public function form_action( $action = false, $type = false, $has_upload = false ) {
 		if ( ! $action ) {
 			$action = Router::ACTION_SAVE_SETTINGS;
 		}
 
-		$has_upload = $has_upload ? 'enctype="multipart/form-data"' : '' ;
+		$has_upload = $has_upload ? 'enctype="multipart/form-data"' : '';
 
-		echo '<form method="post" action="' . wp_unslash( $_SERVER[ 'REQUEST_URI' ] ) . '" class="litespeed-relative" ' . $has_upload . '>' ;
+		echo '<form method="post" action="' . wp_unslash( $_SERVER[ 'REQUEST_URI' ] ) . '" class="litespeed-relative" ' . $has_upload . '>';
 
-		echo '<input type="hidden" name="' . Router::ACTION . '" value="' . $action . '" />' ;
+		echo '<input type="hidden" name="' . Router::ACTION . '" value="' . $action . '" />';
 		if ( $type ) {
-			echo '<input type="hidden" name="' . Router::TYPE . '" value="' . $type . '" />' ;
+			echo '<input type="hidden" name="' . Router::TYPE . '" value="' . $type . '" />';
 		}
-		wp_nonce_field( $action, Router::NONCE ) ;
+		wp_nonce_field( $action, Router::NONCE );
 	}
 
 	/**
@@ -663,12 +628,11 @@ class Admin_Display extends Base
 	 * @since    3.0
 	 * @access public
 	 */
-	public function form_end( $disable_reset = false )
-	{
-		echo "<div class='litespeed-top20'></div>" ;
-		submit_button( __( 'Save Changes', 'litespeed-cache' ), 'primary litespeed-duplicate-float', 'litespeed-submit' ) ;
+	public function form_end( $disable_reset = false ) {
+		echo "<div class='litespeed-top20'></div>";
+		submit_button( __( 'Save Changes', 'litespeed-cache' ), 'primary litespeed-duplicate-float', 'litespeed-submit' );
 
-		echo '</form>' ;
+		echo '</form>';
 	}
 
 	/**
@@ -677,9 +641,8 @@ class Admin_Display extends Base
 	 * @since  3.0
 	 * @access public
 	 */
-	public function enroll( $id )
-	{
-		echo '<input type="hidden" name="' . Admin_Settings::ENROLL . '[]" value="' . $id . '" />' ;
+	public function enroll( $id ) {
+		echo '<input type="hidden" name="' . Admin_Settings::ENROLL . '[]" value="' . $id . '" />';
 	}
 
 	/**
@@ -688,25 +651,33 @@ class Admin_Display extends Base
 	 * @since 1.1.0
 	 * @access public
 	 */
-	public function build_textarea( $id, $cols = false, $val = null )
-	{
+	public function build_textarea( $id, $cols = false, $val = null ) {
 		if ( $val === null ) {
-			$val = Conf::val( $id, true ) ;
+			$val = Conf::val( $id, true );
 
 			if ( is_array( $val ) ) {
-				$val = implode( "\n", $val ) ;
+				$val = implode( "\n", $val );
 			}
 		}
 
 		if ( ! $cols ) {
-			$cols = 80 ;
+			$cols = 80;
 		}
 
-		$this->enroll( $id ) ;
+		$rows = 5;
+		$lines = substr_count( $val, "\n" ) + 2;
+		if ( $lines > $rows ) {
+			$rows = $lines;
+		}
+		if ( $rows > 40 ) {
+			$rows = 40;
+		}
 
-		echo "<textarea name='$id' rows='5' cols='$cols'>" . esc_textarea( $val ) . "</textarea>" ;
+		$this->enroll( $id );
 
-		$this->_check_const_overwritten( $id );
+		echo "<textarea name='$id' rows='$rows' cols='$cols'>" . esc_textarea( $val ) . "</textarea>";
+
+		$this->_check_overwritten( $id );
 	}
 
 	/**
@@ -715,8 +686,7 @@ class Admin_Display extends Base
 	 * @since 1.1.0
 	 * @access public
 	 */
-	public function build_input( $id, $cls = null, $val = null, $type = 'text', $disabled = false )
-	{
+	public function build_input( $id, $cls = null, $val = null, $type = 'text', $disabled = false ) {
 		if ( $val === null ) {
 			$val = Conf::val( $id, true );
 
@@ -740,7 +710,7 @@ class Admin_Display extends Base
 			echo "<input type='$type' class='$cls' name='$id' value='" . esc_textarea( $val ) ."' id='input_$label_id' /> ";
 		}
 
-		$this->_check_const_overwritten( $id );
+		$this->_check_overwritten( $id );
 	}
 
 	/**
@@ -752,27 +722,26 @@ class Admin_Display extends Base
 	 * @param  string $title
 	 * @param  bool $checked
 	 */
-	public function build_checkbox( $id, $title, $checked = null, $value = 1 )
-	{
+	public function build_checkbox( $id, $title, $checked = null, $value = 1 ) {
 		if ( $checked === null && Conf::val( $id, true ) ) {
 			$checked = true;
 		}
-		$checked = $checked ? ' checked ' : '' ;
+		$checked = $checked ? ' checked ' : '';
 
-		$label_id = preg_replace( '|\W|', '', $id ) ;
+		$label_id = preg_replace( '|\W|', '', $id );
 
 		if ( $value !== 1 ) {
-			$label_id .= '_' . $value ;
+			$label_id .= '_' . $value;
 		}
 
-		$this->enroll( $id ) ;
+		$this->enroll( $id );
 
 		echo "<div class='litespeed-tick'>
 			<input type='checkbox' name='$id' id='input_checkbox_$label_id' value='$value' $checked />
 			<label for='input_checkbox_$label_id'>$title</label>
-		</div>" ;
+		</div>";
 
-		$this->_check_const_overwritten( $id );
+		$this->_check_overwritten( $id );
 	}
 
 	/**
@@ -780,20 +749,19 @@ class Admin_Display extends Base
 	 *
 	 * @since 1.7
 	 */
-	public function build_toggle( $id, $checked = null, $title_on = null, $title_off = null )
-	{
+	public function build_toggle( $id, $checked = null, $title_on = null, $title_off = null ) {
 		if ( $checked === null && Conf::val( $id, true ) ) {
-			$checked = true ;
+			$checked = true;
 		}
 
 		if ( $title_on === null ) {
-			$title_on = __( 'ON', 'litespeed-cache' ) ;
-			$title_off = __( 'OFF', 'litespeed-cache' ) ;
+			$title_on = __( 'ON', 'litespeed-cache' );
+			$title_off = __( 'OFF', 'litespeed-cache' );
 		}
 
-		$cls = $checked ? 'primary' : 'default litespeed-toggleoff' ;
+		$cls = $checked ? 'primary' : 'default litespeed-toggleoff';
 
-		$this->enroll( $id ) ;
+		$this->enroll( $id );
 
 		echo "<div class='litespeed-toggle litespeed-toggle-btn litespeed-toggle-btn-$cls' data-litespeed-toggle-on='primary' data-litespeed-toggle-off='default'>
 				<input name='$id' type='hidden' value='$checked' />
@@ -802,9 +770,9 @@ class Admin_Display extends Base
 					<label class='litespeed-toggle-btn litespeed-toggle-btn-default litespeed-toggle-active litespeed-toggle-off'>$title_off</label>
 					<span class='litespeed-toggle-handle litespeed-toggle-btn litespeed-toggle-btn-default'></span>
 				</div>
-			</div>" ;
+			</div>";
 
-		$this->_check_const_overwritten( $id );
+		$this->_check_overwritten( $id );
 	}
 
 	/**
@@ -814,8 +782,7 @@ class Admin_Display extends Base
 	 * @since 1.7 removed param $disable
 	 * @access public
 	 */
-	public function build_switch( $id, $title_list = false )
-	{
+	public function build_switch( $id, $title_list = false ) {
 		$this->enroll( $id );
 
 		echo '<div class="litespeed-switch">';
@@ -833,7 +800,7 @@ class Admin_Display extends Base
 
 		echo '</div>';
 
-		$this->_check_const_overwritten( $id );
+		$this->_check_overwritten( $id );
 	}
 
 	/**
@@ -842,20 +809,19 @@ class Admin_Display extends Base
 	 * @since 1.1.0
 	 * @access private
 	 */
-	private function _build_radio( $id, $val, $txt )
-	{
-		$id_attr = 'input_radio_' . preg_replace( '|\W|', '', $id ) . '_' . $val ;
+	private function _build_radio( $id, $val, $txt ) {
+		$id_attr = 'input_radio_' . preg_replace( '|\W|', '', $id ) . '_' . $val;
 
 		$default = isset( self::$_default_options[ $id ] ) ? self::$_default_options[ $id ] : self::$_default_site_options[ $id ];
 
 		if ( ! is_string( $default ) ) {
-			$checked = (int) Conf::val( $id, true ) === (int) $val ? ' checked ' : '' ;
+			$checked = (int) Conf::val( $id, true ) === (int) $val ? ' checked ' : '';
 		}
 		else {
-			$checked = Conf::val( $id, true ) === $val ? ' checked ' : '' ;
+			$checked = Conf::val( $id, true ) === $val ? ' checked ' : '';
 		}
 
-		echo "<input type='radio' autocomplete='off' name='$id' id='$id_attr' value='$val' $checked /> <label for='$id_attr'>$txt</label>" ;
+		echo "<input type='radio' autocomplete='off' name='$id' id='$id_attr' value='$val' $checked /> <label for='$id_attr'>$txt</label>";
 	}
 
 	/**
@@ -863,12 +829,14 @@ class Admin_Display extends Base
 	 *
 	 * @since  3.0
 	 */
-	protected function _check_const_overwritten( $id )
-	{
-		$val = $this->__cfg->const_overwritten( $id );
-		if ( $val === null ) {
+	protected function _check_overwritten( $id ) {
+		$const_val = $this->__cfg->const_overwritten( $id );
+		$primary_val = $this->__cfg->primary_overwritten( $id );
+		if ( $const_val === null && $primary_val === null ) {
 			return;
 		}
+
+		$val = $const_val !== null ? $const_val : $primary_val;
 
 		$default = isset( self::$_default_options[ $id ] ) ? self::$_default_options[ $id ] : self::$_default_site_options[ $id ];
 
@@ -882,10 +850,20 @@ class Admin_Display extends Base
 			$val = esc_textarea( $val );
 		}
 
-		echo '<div class="litespeed-desc litespeed-warning">⚠️ ' .
-				sprintf( __( 'This setting is overwritten by the PHP constant %s', 'litespeed-cache' ), '<code>' . Base::conf_const( $id ) . '</code>' ) . ', ' .
-				sprintf( __( 'currently set to %s', 'litespeed-cache' ), "<code>$val</code>" ) .
-			'</div>';
+		echo '<div class="litespeed-desc litespeed-warning">⚠️ ';
+
+		if ( $const_val !== null ) {
+			echo sprintf( __( 'This setting is overwritten by the PHP constant %s', 'litespeed-cache' ), '<code>' . Base::conf_const( $id ) . '</code>' );
+		} else {
+			if ( get_current_blog_id() != BLOG_ID_CURRENT_SITE && Conf::val( Base::NETWORK_O_USE_PRIMARY ) ) {
+				echo __( 'This setting is overwritten by the primary site setting', 'litespeed-cache' );
+			}
+			else {
+				echo __( 'This setting is overwritten by the Network setting', 'litespeed-cache' );
+			}
+		}
+
+		echo ', ' . sprintf( __( 'currently set to %s', 'litespeed-cache' ), "<code>$val</code>" ) . '</div>';
 	}
 
 	/**
@@ -894,10 +872,9 @@ class Admin_Display extends Base
 	 * @since 3.0
 	 * @access public
 	 */
-	public function readable_seconds()
-	{
-		echo __( 'seconds', 'litespeed-cache' ) ;
-		echo ' <span data-litespeed-readable=""></span>' ;
+	public function readable_seconds() {
+		echo __( 'seconds', 'litespeed-cache' );
+		echo ' <span data-litespeed-readable=""></span>';
 	}
 
 	/**
@@ -905,28 +882,36 @@ class Admin_Display extends Base
 	 *
 	 * @since  1.1.1
 	 * @access public
-	 * @param  string $id The setting tag
 	 */
-	public function recommended( $id )
-	{
+	public function recommended( $id ) {
 		if ( ! $this->default_settings ) {
-			$this->default_settings = $this->__cfg->load_default_vals() ;
+			$this->default_settings = $this->__cfg->load_default_vals();
 		}
 
-		$val = $this->default_settings[ $id ] ;
+		$val = $this->default_settings[ $id ];
 
 		if ( $val ) {
 			if ( is_array( $val ) ) {
-				$val = implode( "\n", $val ) ;
-				$val = esc_textarea( $val ) ;
-				$val = '<div class="litespeed-desc">'.__( 'Recommended value', 'litespeed-cache' ) . ':</div>'."<textarea readonly rows='5' cols='30'>$val</textarea>" ;
+				$rows = 5;
+				$cols = 30;
+				// Flexible rows/cols
+				$lines = count( $val ) + 1;
+				$rows = min( max( $lines, $rows ), 40 );
+				foreach ( $val as $v ) {
+					$cols = max( strlen( $v ), $cols );
+				}
+				$cols = min( $cols, 150 );
+
+				$val = implode( "\n", $val );
+				$val = esc_textarea( $val );
+				$val = '<div class="litespeed-desc">' . __( 'Recommended value', 'litespeed-cache' ) . ':</div>' . "<textarea readonly rows='$rows' cols='$cols'>$val</textarea>";
 			}
 			else {
-				$val = esc_textarea( $val ) ;
-				$val = "<code>$val</code>" ;
+				$val = esc_textarea( $val );
+				$val = "<code>$val</code>";
 				$val = __( 'Recommended value', 'litespeed-cache' ) . ': '.$val;
 			}
-			echo  $val ;
+			echo  $val;
 		}
 	}
 
@@ -935,21 +920,20 @@ class Admin_Display extends Base
 	 *
 	 * @since  3.0
 	 */
-	protected function _validate_syntax( $id )
-	{
-		$val = Conf::val( $id, true ) ;
+	protected function _validate_syntax( $id ) {
+		$val = Conf::val( $id, true );
 
 		if ( ! $val ) {
-			return ;
+			return;
 		}
 
 		if ( ! is_array( $val ) ) {
-			$val = array( $val ) ;
+			$val = array( $val );
 		}
 
 		foreach ( $val as $v ) {
 			if ( ! Utility::syntax_checker( $v ) ) {
-				echo '<br /><font class="litespeed-warning"> ❌ ' . __( 'Invalid rewrite rule', 'litespeed-cache' ) . ': <code>' . $v . '</code></font>' ;
+				echo '<br /><font class="litespeed-warning"> ❌ ' . __( 'Invalid rewrite rule', 'litespeed-cache' ) . ': <code>' . $v . '</code></font>';
 			}
 		}
 	}
@@ -959,8 +943,7 @@ class Admin_Display extends Base
 	 *
 	 * @since  3.0
 	 */
-	protected function _validate_htaccess_path( $id )
-	{
+	protected function _validate_htaccess_path( $id ) {
 		$val = Conf::val( $id, true );
 		if ( ! $val ) {
 			return;
@@ -976,45 +959,44 @@ class Admin_Display extends Base
 	 *
 	 * @since  3.0
 	 */
-	protected function _validate_ttl( $id, $min = false, $max = false, $allow_zero = false )
-	{
-		$val = Conf::val( $id, true ) ;
+	protected function _validate_ttl( $id, $min = false, $max = false, $allow_zero = false ) {
+		$val = Conf::val( $id, true );
 
 		if ( $allow_zero && ! $val ) {
-			// return ;
+			// return;
 		}
 
-		$tip = array() ;
+		$tip = array();
 		if ( $min && $val < $min && ( ! $allow_zero || $val != 0 ) ) {
-			$tip[] = __( 'Minimum value', 'litespeed-cache' ) . ': <code>' . $min . '</code>.' ;
+			$tip[] = __( 'Minimum value', 'litespeed-cache' ) . ': <code>' . $min . '</code>.';
 		}
 		if ( $max && $val > $max ) {
-			$tip[] = __( 'Maximum value', 'litespeed-cache' ) . ': <code>' . $max . '</code>.' ;
+			$tip[] = __( 'Maximum value', 'litespeed-cache' ) . ': <code>' . $max . '</code>.';
 		}
 
-		echo '<br />' ;
+		echo '<br />';
 
 		if ( $tip ) {
-			echo '<font class="litespeed-warning"> ❌ ' . implode( ' ', $tip ) . '</font>' ;
+			echo '<font class="litespeed-warning"> ❌ ' . implode( ' ', $tip ) . '</font>';
 		}
 
-		$range = '' ;
+		$range = '';
 
 		if ( $allow_zero ) {
-			$range .= __( 'Zero, or', 'litespeed-cache' ) . ' ' ;
+			$range .= __( 'Zero, or', 'litespeed-cache' ) . ' ';
 		}
 
 		if ( $min && $max ) {
-			$range .= $min . ' - ' . $max ;
+			$range .= $min . ' - ' . $max;
 		}
 		elseif ( $min ) {
-			$range .= __( 'Larger than', 'litespeed-cache' ) . ' ' . $min ;
+			$range .= __( 'Larger than', 'litespeed-cache' ) . ' ' . $min;
 		}
 		elseif ( $max ) {
-			$range .= __( 'Smaller than', 'litespeed-cache' ) . ' ' . $max ;
+			$range .= __( 'Smaller than', 'litespeed-cache' ) . ' ' . $max;
 		}
 
-		echo __( 'Value range', 'litespeed-cache' ) . ': <code>' . $range . '</code>' ;
+		echo __( 'Value range', 'litespeed-cache' ) . ': <code>' . $range . '</code>';
 	}
 
 	/**
@@ -1022,30 +1004,29 @@ class Admin_Display extends Base
 	 *
 	 * @since  3.0
 	 */
-	protected function _validate_ip( $id )
-	{
-		$val = Conf::val( $id, true ) ;
+	protected function _validate_ip( $id ) {
+		$val = Conf::val( $id, true );
 		if ( ! $val ) {
-			return ;
+			return;
 		}
 
 		if ( ! is_array( $val ) ) {
-			$val = array( $val ) ;
+			$val = array( $val );
 		}
 
-		$tip = array() ;
+		$tip = array();
 		foreach ( $val as $v ) {
 			if ( ! $v ) {
-				continue ;
+				continue;
 			}
 
 			if ( ! \WP_Http::is_ip_address( $v ) ) {
-				$tip[] = __( 'Invalid IP', 'litespeed-cache' ) . ': <code>' . $v . '</code>.' ;
+				$tip[] = __( 'Invalid IP', 'litespeed-cache' ) . ': <code>' . $v . '</code>.';
 			}
 		}
 
 		if ( $tip ) {
-			echo '<br /><font class="litespeed-warning"> ❌ ' . implode( ' ', $tip ) . '</font>' ;
+			echo '<br /><font class="litespeed-warning"> ❌ ' . implode( ' ', $tip ) . '</font>';
 		}
 	}
 
@@ -1055,37 +1036,15 @@ class Admin_Display extends Base
 	 * @since  1.8.3
 	 * @access protected
 	 */
-	protected function _api_env_var()
-	{
-		$args = func_get_args() ;
-		$s = '<code>' . implode( '</code>, <code>', $args ) . '</code>' ;
+	protected function _api_env_var() {
+		$args = func_get_args();
+		$s = '<code>' . implode( '</code>, <code>', $args ) . '</code>';
 
 		echo '<font class="litespeed-success"> '
 			. __( 'API', 'litespeed-cache' ) . ': '
-			. sprintf( __( 'Server variable(s) %s available to override this setting.', 'litespeed-cache' ), $s ) ;
+			. sprintf( __( 'Server variable(s) %s available to override this setting.', 'litespeed-cache' ), $s );
 
-		$this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:configuration:server_variables' ) ;
-	}
-
-	/**
-	 * Display learn more link
-	 *
-	 * @since  2.6.1
-	 * @access public
-	 */
-	public function learn_more( $link, $title = false, $class = false, $self = false )
-	{
-		if ( $class ) {
-			$class = " class='$class' " ;
-		}
-
-		if ( ! $title ) {
-			$title = __( 'Learn More', 'litespeed-cache' ) ;
-		}
-
-		$self = $self ? '' : "target='_blank'";
-
-		echo " <a href='$link' $self $class>$title</a>" ;
+		Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/admin/#limiting-the-crawler' );
 	}
 
 	/**
@@ -1094,15 +1053,14 @@ class Admin_Display extends Base
 	 * @since  2.6.1
 	 * @access protected
 	 */
-	protected function _uri_usage_example()
-	{
-		echo __( 'The URLs will be compared to the REQUEST_URI server variable.', 'litespeed-cache' ) ;
-		echo ' ' . sprintf( __( 'For example, for %s, %s can be used here.', 'litespeed-cache' ), '<code>/mypath/mypage?aa=bb</code>', '<code>mypage?aa=</code>' ) ;
-		echo '<br /><i>' ;
-			echo sprintf( __( 'To match the beginning, add %s to the beginning of the item.', 'litespeed-cache' ), '<code>^</code>' ) ;
-			echo ' ' . sprintf( __( 'To do an exact match, add %s to the end of the URL.', 'litespeed-cache' ), '<code>$</code>' ) ;
-			echo ' ' . __( 'One per line.', 'litespeed-cache' ) ;
-		echo '</i>' ;
+	protected function _uri_usage_example() {
+		echo __( 'The URLs will be compared to the REQUEST_URI server variable.', 'litespeed-cache' );
+		echo ' ' . sprintf( __( 'For example, for %s, %s can be used here.', 'litespeed-cache' ), '<code>/mypath/mypage?aa=bb</code>', '<code>mypage?aa=</code>' );
+		echo '<br /><i>';
+			echo sprintf( __( 'To match the beginning, add %s to the beginning of the item.', 'litespeed-cache' ), '<code>^</code>' );
+			echo ' ' . sprintf( __( 'To do an exact match, add %s to the end of the URL.', 'litespeed-cache' ), '<code>$</code>' );
+			echo ' ' . __( 'One per line.', 'litespeed-cache' );
+		echo '</i>';
 	}
 
 	/**
@@ -1111,31 +1069,30 @@ class Admin_Display extends Base
 	 * @since  2.0
 	 * @access public
 	 */
-	public static function print_plural( $num, $kind = 'group' )
-	{
+	public static function print_plural( $num, $kind = 'group' ) {
 		if ( $num > 1 ) {
 			switch ( $kind ) {
 				case 'group' :
-					return sprintf( __( '%s groups', 'litespeed-cache' ), $num ) ;
+					return sprintf( __( '%s groups', 'litespeed-cache' ), $num );
 
 				case 'image' :
-					return sprintf( __( '%s images', 'litespeed-cache' ), $num ) ;
+					return sprintf( __( '%s images', 'litespeed-cache' ), $num );
 
 				default:
-					return $num ;
+					return $num;
 			}
 
 		}
 
 		switch ( $kind ) {
 			case 'group' :
-				return sprintf( __( '%s group', 'litespeed-cache' ), $num ) ;
+				return sprintf( __( '%s group', 'litespeed-cache' ), $num );
 
 			case 'image' :
-				return sprintf( __( '%s image', 'litespeed-cache' ), $num ) ;
+				return sprintf( __( '%s image', 'litespeed-cache' ), $num );
 
 			default:
-				return $num ;
+				return $num;
 		}
 	}
 
@@ -1145,30 +1102,29 @@ class Admin_Display extends Base
 	 * @since  2.0
 	 * @access public
 	 */
-	public static function guidance( $title, $steps, $current_step )
-	{
+	public static function guidance( $title, $steps, $current_step ) {
 		if ( $current_step === 'done' ) {
-			$current_step = count( $steps ) + 1 ;
+			$current_step = count( $steps ) + 1;
 		}
 
-		$percentage = ' (' . floor( ( $current_step - 1 ) * 100 / count( $steps ) ) . '%)' ;
+		$percentage = ' (' . floor( ( $current_step - 1 ) * 100 / count( $steps ) ) . '%)';
 
 		$html = '<div class="litespeed-guide">'
 					. '<h2>' . $title . $percentage . '</h2>'
-					. '<ol>' ;
+					. '<ol>';
 		foreach ( $steps as $k => $v ) {
-			$step = $k + 1 ;
+			$step = $k + 1;
 			if ( $current_step > $step ) {
-				$html .= '<li class="litespeed-guide-done">' ;
+				$html .= '<li class="litespeed-guide-done">';
 			}
 			else {
-				$html .= '<li>' ;
+				$html .= '<li>';
 			}
-			$html .= $v . '</li>' ;
+			$html .= $v . '</li>';
 		}
 
-		$html .= '</ol></div>' ;
+		$html .= '</ol></div>';
 
-		return $html ;
+		return $html;
 	}
 }

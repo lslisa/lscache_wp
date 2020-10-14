@@ -5,7 +5,7 @@ defined( 'WPINC' ) || exit;
 
 <h3 class="litespeed-title-short">
 	<?php echo __( 'Purge Settings', 'litespeed-cache' ); ?>
-	<?php $this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:configuration:purge', false, 'litespeed-learn-more' ); ?>
+	<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/cache/#purge-tab' ); ?>
 </h3>
 
 <table class="wp-list-table striped litespeed-table"><tbody>

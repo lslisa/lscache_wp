@@ -7,8 +7,7 @@
 namespace LiteSpeed;
 defined( 'WPINC' ) || exit;
 
-class Core extends Instance
-{
+class Core extends Instance {
 	protected static $_instance;
 
 	const NAME = 'LiteSpeed Cache';
@@ -43,8 +42,7 @@ class Core extends Instance
 	 *
 	 * @since    1.0.0
 	 */
-	protected function __construct()
-	{
+	protected function __construct() {
 		$this->__cfg = Conf::get_instance();
 		$this->__cfg->init();
 
@@ -107,8 +105,7 @@ class Core extends Instance
 	 * Plugin loaded hooks
 	 * @since 3.0
 	 */
-	public function plugins_loaded()
-	{
+	public function plugins_loaded() {
 		load_plugin_textdomain( Core::PLUGIN_NAME, false, 'litespeed-cache/lang/' );
 	}
 
@@ -122,8 +119,7 @@ class Core extends Instance
 	 * @since 1.0.0
 	 * @access public
 	 */
-	public function init()
-	{
+	public function init() {
 		/**
 		 * Added hook before init
 		 * @since  1.6.6
@@ -132,7 +128,9 @@ class Core extends Instance
 		do_action( 'litespeed_init' );
 
 		// in `after_setup_theme`, before `init` hook
-		Activation::auto_update();
+		if ( ! defined( 'LITESPEED_BYPASS_AUTO_V' ) ) {
+			Activation::auto_update();
+		}
 
 		if( is_admin() ) {
 			Admin::get_instance();
@@ -154,6 +152,7 @@ class Core extends Instance
 		 * @since  2.9
 		 */
 		if ( ! empty( $_GET[ Router::ACTION ] ) && $_GET[ Router::ACTION ] == 'before_optm' ) {
+			Debug2::debug( '[Core] ⛑️ bypass_optm due to QS CTRL' );
 			! defined( 'LITESPEED_BYPASS_OPTM' ) && define( 'LITESPEED_BYPASS_OPTM', true );
 		}
 
@@ -185,9 +184,8 @@ class Core extends Instance
 	 * @since 2.9.8
 	 * @access public
 	 */
-	public function after_user_init()
-	{
-		Router::get_instance()->is_crawler_role_simulation();
+	public function after_user_init() {
+		Router::get_instance()->is_role_simulation();
 
 		if ( ! is_admin() && $result = $this->__cfg->in_optm_exc_roles() ) {
 			Debug2::debug( '[Core] ⛑️ bypass_optm: hit Role Excludes setting: ' . $result );
@@ -232,8 +230,7 @@ class Core extends Instance
 	 * @since 1.1.0
 	 * @access public
 	 */
-	public function proceed_action( $action )
-	{
+	public function proceed_action( $action ) {
 		$msg = false;
 		// handle actions
 		switch ( $action ) {
@@ -292,8 +289,7 @@ class Core extends Instance
 	 * @since 1.0.5
 	 * @access public
 	 */
-	public function load_thirdparty()
-	{
+	public function load_thirdparty() {
 		do_action( 'litespeed_load_thirdparty' );
 	}
 
@@ -303,8 +299,7 @@ class Core extends Instance
 	 * @since 1.3
 	 * @access public
 	 */
-	public function footer_hook()
-	{
+	public function footer_hook() {
 		Debug2::debug( '[Core] Footer hook called' );
 		if ( ! defined( 'LITESPEED_FOOTER_CALLED' ) ) {
 			define( 'LITESPEED_FOOTER_CALLED', true );
@@ -317,8 +312,7 @@ class Core extends Instance
 	 * @since 1.3
 	 * @access private
 	 */
-	private function _check_is_html( $buffer = null )
-	{
+	private function _check_is_html( $buffer = null ) {
 		if ( ! defined( 'LITESPEED_FOOTER_CALLED' ) ) {
 			Debug2::debug2( '[Core] CHK html bypass: miss footer const' );
 			return;
@@ -378,12 +372,12 @@ class Core extends Instance
 	 * @param  string $buffer
 	 * @return string
 	 */
-	public function send_headers_force( $buffer )
-	{
+	public function send_headers_force( $buffer ) {
 		$this->_check_is_html( $buffer );
 
-		// Replace ESI preserved list
-		$buffer = ESI::finalize( $buffer );
+		// Hook to modify buffer before
+		$buffer = apply_filters('litespeed_buffer_before', $buffer);
+
 
 		if ( ! defined( 'LITESPEED_BYPASS_OPTM' ) ) {
 			// Image lazy load check
@@ -403,6 +397,12 @@ class Core extends Instance
 			$buffer = CDN::finalize( $buffer );
 		}
 
+		/**
+		 * Replace ESI preserved list
+		 * @since  3.3 Replace this in the end to avoid `Inline JS Defer` or other Page Optm features encoded ESI tags wrongly, which caused LSWS can't recognize ESI
+		 */
+		$buffer = ESI::finalize( $buffer );
+
 		$this->send_headers( true );
 
 		if ( $this->footer_comment ) {
@@ -416,13 +416,14 @@ class Core extends Instance
 		 */
 		if ( defined( 'LSCACHE_IS_ESI' ) ) {
 			Debug2::debug( '[Core] ESI Start 👇' );
-			if ( strlen( $buffer ) > 100 ) {
-				Debug2::debug( trim( substr( $buffer, 0, 100 ) ) . '.....' );
+			if ( strlen( $buffer ) > 500 ) {
+				Debug2::debug( trim( substr( $buffer, 0, 500 ) ) . '.....' );
 			}
 			else {
 				Debug2::debug( $buffer );
 			}
 			Debug2::debug( '[Core] ESI End 👆' );
+			Debug2::debug( $buffer );
 		}
 
 		if ( apply_filters( 'litespeed_is_json', false ) ) {
@@ -435,6 +436,9 @@ class Core extends Instance
 				Debug2::debug( '[Core] JSON Buffer' );
 			}
 		}
+
+		// Hook to modify buffer after
+		$buffer = apply_filters('litespeed_buffer_after', $buffer);
 
 		Debug2::debug( "End response\n--------------------------------------------------------------------------------\n" );
 
@@ -450,8 +454,7 @@ class Core extends Instance
 	 * @access public
 	 * @param boolean $is_forced If the header is sent following our normal finalizing logic
 	 */
-	public function send_headers( $is_forced = false )
-	{
+	public function send_headers( $is_forced = false ) {
 		// Make sure header output only run once
 		if ( ! defined( 'LITESPEED_DID_' . __FUNCTION__ ) ) {
 			define( 'LITESPEED_DID_' . __FUNCTION__, true );

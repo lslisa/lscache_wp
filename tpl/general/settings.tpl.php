@@ -7,15 +7,13 @@ $__cloud = Cloud::get_instance();
 // This will drop QS param `qc_res` and `domain_hash` also
 $__cloud->update_is_linked_status();
 
-$permalink_structure = get_option( 'permalink_structure' );
-
 $cloud_summary = Cloud::get_summary();
 
 $can_token = $__cloud->can_token();
 
 $is_requesting = ! empty( $cloud_summary[ 'token_ts' ] ) && ( empty( $cloud_summary[ 'apikey_ts' ] ) || $cloud_summary[ 'token_ts' ] > $cloud_summary[ 'apikey_ts' ] );
 
-$apply_btn_txt = __( 'Apply Domain Key', 'litespeed-cache' );
+$apply_btn_txt = __( 'Request Domain Key', 'litespeed-cache' );
 if ( Conf::val( Base::O_API_KEY ) ) {
 	$apply_btn_txt = __( 'Refresh Domain Key', 'litespeed-cache' );
 	if ( $is_requesting ) {
@@ -43,7 +41,7 @@ $this->form_action();
 
 <h3 class="litespeed-title-short">
 	<?php echo __( 'General Settings', 'litespeed-cache' ); ?>
-	<?php $this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:configuration:general', false, 'litespeed-learn-more' ); ?>
+	<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/general/' ); ?>
 </h3>
 
 <table class="wp-list-table striped litespeed-table"><tbody>
@@ -63,29 +61,29 @@ $this->form_action();
 				<?php $this->build_input( $id, null, null, 'text', true ); ?>
 			<?php endif; ?>
 
-			<?php if ( $permalink_structure && $can_token ) : ?>
-				<?php $this->learn_more( Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_GEN_KEY ), $apply_btn_txt, 'button litespeed-btn-success', true ); ?>
+			<?php if ( $can_token ) : ?>
+				<?php Doc::learn_more( Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_GEN_KEY ), $apply_btn_txt, true, 'button litespeed-btn-success' ); ?>
 			<?php else: ?>
-				<?php $this->learn_more( 'javascript:;', $apply_btn_txt, 'button disabled', true ); ?>
+				<?php Doc::learn_more( 'javascript:;', $apply_btn_txt, true, 'button disabled' ); ?>
 			<?php endif; ?>
 			<?php if ( $apply_ts_txt ) : ?>
 				<span class="litespeed-desc"><?php echo $apply_ts_txt; ?></span>
 			<?php endif; ?>
 
 			<?php if ( ! empty( $cloud_summary[ 'is_linked' ] ) ) : ?>
-				<?php $this->learn_more( Cloud::CLOUD_SERVER_DASH, __( 'Visit My Dashboard on QUIC.cloud', 'litespeed-cache' ), 'button litespeed-btn-success litespeed-right', false ); ?>
+				<?php Doc::learn_more( Cloud::CLOUD_SERVER_DASH, __( 'Visit My Dashboard on QUIC.cloud', 'litespeed-cache' ), false, 'button litespeed-btn-success litespeed-right' ); ?>
 			<?php elseif ( $__cloud->can_link_qc() ) : ?>
-				<?php $this->learn_more( Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_LINK ), __( 'Link to QUIC.cloud', 'litespeed-cache' ), 'button litespeed-btn-warning litespeed-right', true ); ?>
+				<?php Doc::learn_more( Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_LINK ), __( 'Link to QUIC.cloud', 'litespeed-cache' ), true, 'button litespeed-btn-warning litespeed-right' ); ?>
 			<?php else: ?>
-				<?php $this->learn_more( 'javascript:;', __( 'Link to QUIC.cloud', 'litespeed-cache' ), 'button disabled litespeed-btn-warning litespeed-right', true ); ?>
+				<?php Doc::learn_more( 'javascript:;', __( 'Link to QUIC.cloud', 'litespeed-cache' ), true, 'button disabled litespeed-btn-warning litespeed-right' ); ?>
 			<?php endif; ?>
 
 			<?php if ( $is_requesting && $can_token ) : ?>
 				<div class="litespeed-callout notice notice-error inline">
 					<h4><?php echo __( 'Notice', 'litespeed-cache' ); ?>:</h4>
-					<p><?php echo sprintf( __( 'There is a problem receiving your domain key. Please click the %s button to retry.', 'litespeed-cache' ), '<code>' . $apply_btn_txt . '</code>' ); ?></p>
+					<p><?php echo sprintf( __( 'There was a problem with retrieving your Domain Key. Please click the %s button to retry.', 'litespeed-cache' ), '<code>' . $apply_btn_txt . '</code>' ); ?></p>
 					<p><?php echo __( 'There are two reasons why we might not be able to communicate with your domain:', 'litespeed-cache' ); ?>:</p>
-					<p>1) <?php echo sprintf( __( 'The POST callback to %s failed.', 'litespeed-cache' ), '<code>' . home_url() . '/' . rest_get_url_prefix() . '/litespeed/v1/token</code>' ); ?> </p>
+					<p>1) <?php echo sprintf( __( 'The POST callback to %s failed.', 'litespeed-cache' ), '<code>' . home_url() . '/' . ( function_exists( 'rest_get_url_prefix' ) ? rest_get_url_prefix() : apply_filters( 'rest_url_prefix', 'wp-json' ) ) . '/litespeed/v1/token</code>' ); ?> </p>
 					<p>2) <?php echo sprintf( __( 'Our %s was not whitelisted.', 'litespeed-cache' ), __( 'Current Online Server IPs', 'litespeed-cache' ) ); ?></p>
 					<p><?php echo __( 'Please verify that your other plugins are not blocking REST API calls, whitelist our server IPs, or contact your server admin for assistance.', 'litespeed-cache' ); ?>:</p>
 				</div>
@@ -94,16 +92,7 @@ $this->form_action();
 			<?php if ( $is_requesting ) : ?>
 				<div class="litespeed-callout notice notice-warning inline">
 					<h4><?php echo __( 'Notice', 'litespeed-cache' ); ?>:</h4>
-					<p><?php echo __( 'Please wait. You will be notified upon approval.', 'litespeed-cache' ); ?></p>
-				</div>
-			<?php endif; ?>
-
-			<?php if ( ! $permalink_structure ) : ?>
-				<div class="litespeed-callout notice notice-error inline">
-					<h4><?php echo __( 'Warning', 'litespeed-cache' ); ?>:</h4>
-					<p><?php echo sprintf( __( 'You must set WordPress %1$s to a value other than %2$s before generating an Domain key.', 'litespeed-cache' ), '<code>' . __( 'Permalink Settings' ) . '</code>', '<code>' . __( 'Plain' ) . '</code>' ); ?>
-						<?php echo '<a href="options-permalink.php">' . __( 'Click here to config', 'litespeed-cache' ) . '</a>'; ?>
-					</p>
+					<p><?php echo __( 'Request submitted. Please wait, then refresh the page to see approval notification.', 'litespeed-cache' ); ?></p>
 				</div>
 			<?php endif; ?>
 
@@ -116,16 +105,16 @@ $this->form_action();
 				<div class="litespeed-callout notice notice-warning inline">
 					<h4><?php echo __( 'Notice', 'litespeed-cache' ); ?>:</h4>
 					<p><?php echo sprintf( __( 'You must click the %s button if you wish to associate this site with a QUIC.cloud account.', 'litespeed-cache' ), '<code>' . __( 'Link to QUIC.cloud', 'litespeed-cache' ) . '</code>' ); ?></p>
-					<p><?php $this->learn_more( 'https://www.quic.cloud/faq/#do-i-need-to-register-on-quic-cloud-to-use-the-online-services', __( 'Benefits of linking to a QUIC.cloud account', 'litespeed-cache' ) ); ?></p>
+					<p><?php Doc::learn_more( 'https://www.quic.cloud/faq/#do-i-need-to-register-on-quic-cloud-to-use-the-online-services', __( 'Benefits of linking to a QUIC.cloud account', 'litespeed-cache' ) ); ?></p>
 				</div>
 			<?php endif; ?>
 
 			<div class="litespeed-desc">
-				<?php echo __( 'An Domain key is necessary for security when communicating with our QUIC.cloud servers. Required for online services.', 'litespeed-cache' ); ?>
+				<?php echo __( 'A Domain Key is required for QUIC.cloud online services.', 'litespeed-cache' ); ?>
 				<br /><?php Doc::notice_ips(); ?>
 				<div class="litespeed-callout notice notice-success inline">
 					<h4><?php echo __( 'Current Cloud Nodes in Service','litespeed-cache' ); ?>
-						<a class="litespeed-right" href="<?php echo Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_CLEAR_CLOUD ); ?>" data-balloon-pos="up" data-balloon-break aria-label='<?php echo __( 'Click to clear all nodes for further redetection.', 'litespeed-cache' ); ?>' data-litespeed-cfm="<?php echo __( 'Are you sure to clear all cloud nodes?', 'litespeed-cache' ) ; ?>"><i class='litespeed-quic-icon'></i></a>
+						<a class="litespeed-right" href="<?php echo Utility::build_url( Router::ACTION_CLOUD, Cloud::TYPE_CLEAR_CLOUD ); ?>" data-balloon-pos="up" data-balloon-break aria-label='<?php echo __( 'Click to clear all nodes for further redetection.', 'litespeed-cache' ); ?>' data-litespeed-cfm="<?php echo __( 'Are you sure you want to clear all cloud nodes?', 'litespeed-cache' ); ?>"><i class='litespeed-quic-icon'></i></a>
 					</h4>
 					<p>
 						<?php
@@ -143,6 +132,25 @@ $this->form_action();
 					</p>
 				</div>
 
+			</div>
+		</td>
+	</tr>
+
+	<tr>
+		<th>
+			<?php $id = Base::O_SERVER_IP; ?>
+			<?php $this->title( $id ); ?>
+		</th>
+		<td>
+			<?php $this->build_input($id); ?>
+			<div class="litespeed-desc">
+				<?php echo __( 'Enter this site\'s IP address to allow cloud services directly call IP instead of domain name. This eliminates the overhead of DNS and CDN lookups.', 'litespeed-cache' ); ?>
+				<br /><?php echo __('Your server IP is', 'litespeed-cache'); ?>: <code id='litespeed_server_ip'>-</code> <a href="javascript:;" class="button button-link" id="litespeed_get_ip"><?php echo __('Check my public IP from', 'litespeed-cache'); ?> DoAPI.us</a>
+				<font class="litespeed-warning litespeed-left10">
+					⚠️ <?php echo __( 'Notice', 'litespeed-cache' ); ?>: <?php echo __( 'the auto-detected IP may not be accurate if you have an additional outgoing IP set, or you have multiple IPs configured on your server. Please make sure this IP is the correct one for visiting your site.', 'litespeed-cache' ); ?>
+				</font>
+
+				<?php $this->_validate_ip( $id ); ?>
 			</div>
 		</td>
 	</tr>

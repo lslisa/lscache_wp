@@ -29,7 +29,10 @@ $pagination = Utility::pagination( $count, 30 );
 	?>
 </p>
 
-<h3 class="litespeed-title"><?php echo __( 'Sitemap List', 'litespeed-cache' ); ?></h3>
+<h3 class="litespeed-title">
+	<?php echo __( 'Sitemap List', 'litespeed-cache' ); ?>
+	<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/crawler/#map-tab' ); ?>
+</h3>
 
 <?php echo __( 'Sitemap Total', 'litespeed-cache' ) . ': ' . $count; ?>
 

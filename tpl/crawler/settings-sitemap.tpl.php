@@ -7,7 +7,7 @@ $this->form_action();
 
 <h3 class="litespeed-title-short">
 	<?php echo __('Crawler Sitemap Settings', 'litespeed-cache'); ?>
-	<?php $this->learn_more( 'https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cache:lscwp:configuration:crawler', false, 'litespeed-learn-more' ); ?>
+	<?php Doc::learn_more( 'https://docs.litespeedtech.com/lscache/lscwp/crawler/#sitemap-settings-tab' ); ?>
 </h3>
 
 <table class="wp-list-table striped litespeed-table"><tbody>
@@ -34,6 +34,21 @@ $this->form_action();
 			<div class="litespeed-desc">
 				<?php echo __( 'The crawler will parse the sitemap and save into the database before crawling. When parsing the sitemap, dropping the domain can save DB storage.', 'litespeed-cache' ); ?>
 				<?php echo __( 'If you are using multiple domains for one site, and have multiple domains in the sitemap, please keep this option OFF so the crawler knows to crawl every domain.', 'litespeed-cache' ); ?>
+			</div>
+		</td>
+	</tr>
+
+	<tr>
+		<th>
+			<?php $id = Base::O_CRAWLER_MAP_TIMEOUT; ?>
+			<?php $this->title( $id ); ?>
+		</th>
+		<td>
+			<?php $this->build_input( $id, 'litespeed-input-short' ); ?>
+			<div class="litespeed-desc">
+				<?php echo __( 'Specify the timeout while parsing the sitemap.', 'litespeed-cache' ); ?>
+				<?php $this->recommended( $id ); ?>
+				<?php $this->_validate_ttl( $id, 15, 1800 ); ?>
 			</div>
 		</td>
 	</tr>
@@ -87,7 +102,7 @@ $this->form_action();
 					<div class="litespeed-callout notice notice-warning inline">
 						<h4><?php echo __('Available Custom Post Type','litespeed-cache'); ?></h4>
 						<p>
-							<?php echo implode('<br />', array_diff(get_post_types( '', 'names' ), array('post', 'page'))); ?>
+							<?php echo implode('<br />', array_diff(get_post_types(), array('post', 'page'))); ?>
 						</p>
 					</div>
 				</div>

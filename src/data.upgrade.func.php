@@ -6,17 +6,42 @@
  *
  * @since  3.0
  */
-defined( 'WPINC' ) || exit ;
+defined( 'WPINC' ) || exit;
 
-use LiteSpeed\Debug2 ;
+use LiteSpeed\Debug2;
+use LiteSpeed\Conf;
+
+/**
+ * Append jQuery to JS optm exclude list for max compatibility
+ * Turn off JS Combine and Defer
+ *
+ * @since  3.5.1
+ */
+function litespeed_update_3_5() {
+	$__conf = Conf::get_instance();
+	// Excludes jQuery
+	foreach ( array( 'optm-js_exc', 'optm-js_defer_exc' ) as $v ) {
+		$curr_setting = Conf::val( $v );
+		$curr_setting[] = 'jquery.js';
+		$curr_setting[] = 'jquery.min.js';
+		$__conf->update( $v, $curr_setting );
+	}
+	// Turn off JS Combine and defer
+	foreach ( array( 'optm-js_comb', 'optm-js_defer', 'optm-js_inline_defer' ) as $v ) {
+		$curr_setting = Conf::val( $v );
+		if ( ! $curr_setting ) {
+			continue;
+		}
+		$__conf->update( $v, false );
+	}
+}
 
 /**
  * For version under v2.0 to v2.0+
  *
  * @since  3.0
  */
-function litespeed_update_2_0( $ver )
-{
+function litespeed_update_2_0( $ver ) {
 	global $wpdb ;
 
 	// Table version only exists after all old data migrated
@@ -105,8 +130,7 @@ function litespeed_update_2_0( $ver )
  *
  * @since  3.0
  */
-function litespeed_update_3_0( $ver )
-{
+function litespeed_update_3_0( $ver ) {
 	global $wpdb;
 	// Upgrade v2.0- to v2.0 first
 	if ( version_compare( $ver, '2.0', '<' ) ) {
@@ -267,6 +291,7 @@ function litespeed_update_3_0( $ver )
 		'cache_object_user'			=> 'object-user',
 		'cache_object_pswd'			=> 'object-psw',
 
+		'cdn'						=> 'cdn',
 		'cdn_ori'					=> 'cdn-ori',
 		'cdn_exclude' 				=> 'cdn-exc',
 		'cdn_remote_jquery'			=> 'cdn-remote_jq',
@@ -296,15 +321,15 @@ function litespeed_update_3_0( $ver )
 		'media_webp_replace_srcset'	=> 'img_optm-webp_replace_srcset',
 
 		'css_minify'			=> 'optm-css_min',
-		'css_inline_minify'		=> 'optm-css_inline_min',
+		// 'css_inline_minify'		=> 'optm-css_inline_min',
 		'css_combine'			=> 'optm-css_comb',
-		'css_combined_priority'	=> 'optm-css_comb_priority',
+		// 'css_combined_priority'	=> 'optm-css_comb_priority',
 		'css_http2'				=> 'optm-css_http2',
 		'css_exclude' 			=> 'optm-css_exc',
 		'js_minify'				=> 'optm-js_min',
-		'js_inline_minify'		=> 'optm-js_inline_min',
+		// 'js_inline_minify'		=> 'optm-js_inline_min',
 		'js_combine'			=> 'optm-js_comb',
-		'js_combined_priority'	=> 'optm-js_comb_priority',
+		// 'js_combined_priority'	=> 'optm-js_comb_priority',
 		'js_http2'				=> 'optm-js_http2',
 		'js_exclude' 			=> 'optm-js_exc',
 		'optimize_ttl'			=> 'optm-ttl',
@@ -317,9 +342,9 @@ function litespeed_update_3_0( $ver )
 		'optm_css_async_inline'	=> 'optm-css_async_inline',
 		'optm_js_defer'			=> 'optm-js_defer',
 		'optm_emoji_rm'			=> 'optm-emoji_rm',
-		'optm_exclude_jquery'	=> 'optm-exc_jq',
+		// 'optm_exclude_jquery'	=> 'optm-exc_jq',
 		'optm_ggfonts_async'	=> 'optm-ggfonts_async',
-		'optm_max_size'			=> 'optm-max_size',
+		// 'optm_max_size'			=> 'optm-max_size',
 		'optm_rm_comment'		=> 'optm-rm_comment',
 	) ;
 	foreach ( $data as $k => $v ) {

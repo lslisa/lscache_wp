@@ -7,8 +7,7 @@
 namespace LiteSpeed;
 defined( 'WPINC' ) || exit;
 
-class Crawler extends Base
-{
+class Crawler extends Base {
 	const TYPE_REFRESH_MAP = 'refresh_map';
 	const TYPE_EMPTY = 'empty';
 	const TYPE_BLACKLIST_EMPTY = 'blacklist_empty';
@@ -20,7 +19,6 @@ class Crawler extends Base
 	const USER_AGENT = 'lscache_walker';
 	const FAST_USER_AGENT = 'lscache_runner';
 	const CHUNKS = 10000;
-	const ITEM_HASH = 'hash';
 
 	protected static $_instance;
 
@@ -54,8 +52,7 @@ class Crawler extends Base
 	 * @since    1.1.0
 	 * @access protected
 	 */
-	protected function __construct()
-	{
+	protected function __construct() {
 		if ( is_multisite() ) {
 			$this->_sitemeta = 'meta' . get_current_blog_id() . '.data';
 		}
@@ -77,8 +74,7 @@ class Crawler extends Base
 	 * @since  3.0
 	 * @access public
 	 */
-	public static function get_summary( $field = false )
-	{
+	public static function get_summary( $field = false ) {
 		$_default = array(
 			'list_size'			=> 0,
 			'last_update_time'	=> 0,
@@ -120,8 +116,7 @@ class Crawler extends Base
 	 * @since  3.0
 	 * @access public
 	 */
-	public static function save_summary( $data = null )
-	{
+	public static function save_summary( $data = null ) {
 		$instance = self::get_instance();
 		$instance->_summary[ 'meta_save_time' ] = time();
 
@@ -140,8 +135,7 @@ class Crawler extends Base
 	 * @since    1.1.0
 	 * @access public
 	 */
-	public static function start( $force = false )
-	{
+	public static function start( $force = false ) {
 		if ( ! Router::can_crawl() ) {
 			Debug2::debug( '🐞 ......crawler is NOT allowed by the server admin......' );
 			return false;
@@ -160,8 +154,7 @@ class Crawler extends Base
 	 * @since    1.1.0
 	 * @access   private
 	 */
-	private function _crawl_data( $force )
-	{
+	private function _crawl_data( $force ) {
 		Debug2::debug( '🐞 ......crawler started......' );
 		// for the first time running
 		if ( ! $this->_summary || ! Data::get_instance()->tb_exist( 'crawler' ) || ! Data::get_instance()->tb_exist( 'crawler_blacklist' ) ) {
@@ -200,8 +193,9 @@ class Crawler extends Base
 	 * @since  3.0
 	 * @access private
 	 */
-	private function load_conf()
-	{
+	private function load_conf() {
+		$this->_crawler_conf[ 'base' ] = home_url();
+
 		$current_crawler = $this->_crawlers[ $this->_summary[ 'curr_crawler' ] ];
 
 		/**
@@ -245,8 +239,6 @@ class Crawler extends Base
 			$this->_crawler_conf[ 'ua' ] = 'Mobile';
 		}
 
-		$this->_crawler_conf[ 'base' ] = home_url();
-
 		/**
 		 * Limit delay to use server setting
 		 * @since 1.8.3
@@ -274,8 +266,7 @@ class Crawler extends Base
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _engine_start()
-	{
+	private function _engine_start() {
 		// check if is running
 		if ( $this->_summary['is_running'] && time() - $this->_summary['is_running'] < $this->_crawler_conf[ 'run_duration' ] ) {
 			$this->_end_reason = 'stopped';
@@ -324,8 +315,7 @@ class Crawler extends Base
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _adjust_current_threads()
-	{
+	private function _adjust_current_threads() {
 		/**
 		 * If server is windows, exit
 		 * @see  https://wordpress.org/support/topic/crawler-keeps-causing-crashes/
@@ -388,8 +378,7 @@ class Crawler extends Base
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _prepare_running()
-	{
+	private function _prepare_running() {
 		$this->_summary[ 'is_running' ] = time();
 		$this->_summary[ 'done' ] = 0;// reset done status
 		$this->_summary[ 'last_status' ] = 'prepare running';
@@ -400,10 +389,15 @@ class Crawler extends Base
 			$this->_summary[ 'curr_crawler_beginning_time' ] = time();
 		}
 
-		if ( $this->_summary['curr_crawler'] == 0 && $this->_summary['last_pos'] == 0 ) {
-			$this->_summary['this_full_beginning_time'] = time();
-			$this->_summary['list_size'] = $this->__map->count_map();
+		if ( $this->_summary[ 'curr_crawler' ] == 0 && $this->_summary[ 'last_pos' ] == 0 ) {
+			$this->_summary[ 'this_full_beginning_time' ] = time();
+			$this->_summary[ 'list_size' ] = $this->__map->count_map();
 		}
+
+		if ( $this->_summary[ 'end_reason' ] == 'end' && $this->_summary[ 'last_pos' ] == 0 ) {
+			$this->_summary[ 'crawler_stats' ][ $this->_summary[ 'curr_crawler' ] ] = array();
+		}
+
 		self::save_summary();
 	}
 
@@ -413,16 +407,15 @@ class Crawler extends Base
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _do_running()
-	{
-		$curlOptions = $this->_get_curl_options();
+	private function _do_running() {
+		$options = $this->_get_curl_options( true );
 
 		while ( $urlChunks = $this->__map->list_map( self::CHUNKS, $this->_summary['last_pos'] ) ) {
 			// start crawling
 			$urlChunks = array_chunk( $urlChunks, $this->_cur_threads );
 			foreach ( $urlChunks as $rows ) {
 				// multi curl
-				$rets = $this->_multi_request( $rows, $curlOptions );
+				$rets = $this->_multi_request( $rows, $options );
 
 				// check result headers
 				foreach ( $rows as $row ) {
@@ -518,8 +511,7 @@ class Crawler extends Base
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _multi_request( $rows, $options )
-	{
+	private function _multi_request( $rows, $options ) {
 		$mh = curl_multi_init();
 		$curls = array();
 		foreach ( $rows as $row ) {
@@ -533,30 +525,13 @@ class Crawler extends Base
 
 			// Append URL
 			$url = $row[ 'url' ];
-			$curlopt_host = '';
 			if ( $this->_options[ Base::O_CRAWLER_DROP_DOMAIN ] ) {
 				$url = $this->_crawler_conf[ 'base' ] . $row[ 'url' ];
-			}
-			elseif ( $this->_options[ Base::O_SERVER_IP ] ) {
-				// Resolve URL to IP
-				$parsed_url = parse_url( $row[ 'url' ] );
-
-				if ( ! empty( $parsed_url[ 'host' ] ) ) {
-					// assign domain for curl
-					$curlopt_host = 'Host: ' . $parsed_url[ 'host' ]; // Will append to CURLOPT_HTTPHEADER
-					// replace domain with direct ip
-					$parsed_url[ 'host' ] = $this->_options[ Base::O_SERVER_IP ];
-					$url = http_build_url( $parsed_url );
-				}
 			}
 			curl_setopt( $curls[ $row[ 'id' ] ], CURLOPT_URL, $url );
 			Debug2::debug( '🐞 Crawling [url] ' . $url . ( $url == $row[ 'url' ] ? '' : ' [ori] ' . $row[ 'url' ] ) );
 
-			$this_options = $options;
-			if ( $curlopt_host ) {
-				$this_options[ CURLOPT_HTTPHEADER ][] = $curlopt_host;
-			}
-			curl_setopt_array( $curls[ $row[ 'id' ] ], $this_options );
+			curl_setopt_array( $curls[ $row[ 'id' ] ], $options );
 
 			curl_multi_add_handle( $mh, $curls[ $row[ 'id' ] ] );
 		}
@@ -608,8 +583,7 @@ class Crawler extends Base
 	 * @since  2.0
 	 * @access private
 	 */
-	private function _status_parse( $header, $code )
-	{
+	private function _status_parse( $header, $code ) {
 		if ( $code == 201 ) {
 			return 'H';
 		}
@@ -620,7 +594,7 @@ class Crawler extends Base
 
 		$_cache_headers = array(
 			'x-litespeed-cache',
-			'x-adc-cache',
+			'x-lsadc-cache',
 			'x-qc-cache',
 		);
 
@@ -642,8 +616,7 @@ class Crawler extends Base
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _get_curl_options()
-	{
+	private function _get_curl_options( $crawler_only = false ) {
 		$options = array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HEADER => true,
@@ -668,23 +641,20 @@ class Crawler extends Base
 		$options[ CURLOPT_HTTP_VERSION ] = CURL_HTTP_VERSION_1_1;
 		// 	$options[ CURL_HTTP_VERSION_2 ] = 1;
 
-		if ( strpos( $this->_crawler_conf[ 'ua' ], Crawler::FAST_USER_AGENT ) !== 0 ) {
-			$this->_crawler_conf[ 'ua' ] = Crawler::FAST_USER_AGENT . ' ' . $this->_crawler_conf[ 'ua' ];
-		}
-		$options[ CURLOPT_USERAGENT ] = $this->_crawler_conf[ 'ua' ];
-
+		// IP resolve
 		if ( $this->_options[ Base::O_SERVER_IP ] ) {
 			Utility::compatibility();
-			if ( $this->_options[ Base::O_CRAWLER_DROP_DOMAIN ] && $this->_crawler_conf[ 'base' ] ) {
+			if ( ( $this->_options[ Base::O_CRAWLER_DROP_DOMAIN ] || ! $crawler_only ) && $this->_crawler_conf[ 'base' ] ) {
 				// Resolve URL to IP
 				$parsed_url = parse_url( $this->_crawler_conf[ 'base' ] );
 
 				if ( ! empty( $parsed_url[ 'host' ] ) ) {
-					// assign domain for curl
-					$options[ CURLOPT_HTTPHEADER ][] = 'Host: ' . $parsed_url[ 'host' ];
-					// replace domain with direct ip
-					$parsed_url[ 'host' ] = $this->_options[ Base::O_SERVER_IP ];
-					$this->_crawler_conf[ 'base' ] = http_build_url( $parsed_url );
+					$dom = $parsed_url[ 'host' ];
+					$port = $parsed_url[ 'scheme' ] == 'https' ? '443' : '80';
+					$url = $dom . ':' . $port . ':' . $this->_options[ Base::O_SERVER_IP ];
+
+					$options[ CURLOPT_RESOLVE ] = array( $url );
+					$options[ CURLOPT_DNS_USE_GLOBAL_CACHE ] = false;
 				}
 			}
 		}
@@ -692,18 +662,28 @@ class Crawler extends Base
 		// if is walker
 		// $options[ CURLOPT_FRESH_CONNECT ] = true;
 
+		// Referer
 		if ( isset( $_SERVER[ 'HTTP_HOST' ] ) && isset( $_SERVER[ 'REQUEST_URI' ] ) ) {
 			$options[ CURLOPT_REFERER ] = 'http://' . $_SERVER[ 'HTTP_HOST' ] . $_SERVER[ 'REQUEST_URI' ];
 		}
+
+		// User Agent
+		if ( $crawler_only ) {
+			if ( strpos( $this->_crawler_conf[ 'ua' ], Crawler::FAST_USER_AGENT ) !== 0 ) {
+				$this->_crawler_conf[ 'ua' ] = Crawler::FAST_USER_AGENT . ' ' . $this->_crawler_conf[ 'ua' ];
+			}
+		}
+		$options[ CURLOPT_USERAGENT ] = $this->_crawler_conf[ 'ua' ];
 
 		/**
 		 * Append hash to cookie for validation
 		 * @since  1.9.1
 		 */
-		$hash = Str::rrand( 6 );
-		self::update_option( Crawler::ITEM_HASH, $hash );
-		$this->_crawler_conf[ 'cookies' ][ 'litespeed_hash' ] = $hash;
+		if ( $crawler_only ) {
+			$this->_crawler_conf[ 'cookies' ][ 'litespeed_hash' ] = Router::get_hash();
+		}
 
+		// Cookies
 		$cookies = array();
 		foreach ( $this->_crawler_conf[ 'cookies' ] as $k => $v ) {
 			if ( ! $v ) {
@@ -719,26 +699,47 @@ class Crawler extends Base
 	}
 
 	/**
+	 * Self curl to get HTML content
+	 *
+	 * @since  3.3
+	 */
+	public function self_curl( $url, $ua ) {
+		$this->_crawler_conf[ 'base' ] = home_url();
+		$this->_crawler_conf[ 'ua' ] = $ua;
+
+		$options = $this->_get_curl_options();
+		$options[ CURLOPT_HEADER ] = false;
+		$options[ CURLOPT_FOLLOWLOCATION ] = true;
+
+		$ch = curl_init();
+		curl_setopt_array( $ch, $options );
+		curl_setopt( $ch, CURLOPT_URL, $url );
+		$result = curl_exec( $ch );
+		curl_close( $ch );
+
+		return $result;
+	}
+
+	/**
 	 * Terminate crawling
 	 *
 	 * @since  1.1.0
 	 * @access private
 	 */
-	private function _terminate_running()
-	{
+	private function _terminate_running() {
 		$this->_map_status_list = $this->__map->save_map_status( $this->_map_status_list, $this->_summary[ 'curr_crawler' ] );
 
 		if ( $this->_end_reason == 'end' ) { // Current crawler is fully done
 			// $end_reason = sprintf( __( 'Crawler %s reached end of sitemap file.', 'litespeed-cache' ), '#' . ( $this->_summary['curr_crawler'] + 1 ) );
 			$this->_summary[ 'curr_crawler' ]++; // Jump to next cralwer
-			$this->_summary[ 'crawler_stats' ][ $this->_summary[ 'curr_crawler' ] ] = array();
+			// $this->_summary[ 'crawler_stats' ][ $this->_summary[ 'curr_crawler' ] ] = array(); // reset this at next crawl time
 			$this->_summary[ 'last_pos' ] = 0;// reset last position
 			$this->_summary[ 'last_crawler_total_cost' ] = time() - $this->_summary[ 'curr_crawler_beginning_time' ];
 			$count_crawlers = count( $this->list_crawlers() );
 			if ( $this->_summary[ 'curr_crawler' ] >= $count_crawlers ) {
 				Debug2::debug( '🐞 _terminate_running Touched end, whole crawled. Reload crawler!' );
 				$this->_summary[ 'curr_crawler' ] = 0;
-				$this->_summary[ 'crawler_stats' ][ $this->_summary[ 'curr_crawler' ] ] = array();
+				// $this->_summary[ 'crawler_stats' ][ $this->_summary[ 'curr_crawler' ] ] = array();
 				$this->_summary[ 'done' ] = 'touchedEnd';// log done status
 				$this->_summary[ 'last_full_time_cost' ] = time() - $this->_summary[ 'this_full_beginning_time' ];
 			}
@@ -755,8 +756,7 @@ class Crawler extends Base
 	 * @since    1.9.1
 	 * @access   public
 	 */
-	public function list_crawlers()
-	{
+	public function list_crawlers() {
 		if ( $this->_crawlers ) {
 			return $this->_crawlers;
 		}
@@ -819,8 +819,7 @@ class Crawler extends Base
 	 * @since 2.8
 	 * @access private
 	 */
-	private function _recursive_build_crawler( $crawler_factors, $group = array(), $i = 0 )
-	{
+	private function _recursive_build_crawler( $crawler_factors, $group = array(), $i = 0 ) {
 		$current_factor = array_keys( $crawler_factors );
 		$current_factor = $current_factor[ $i ];
 
@@ -860,8 +859,7 @@ class Crawler extends Base
 	 * @since    1.1.0
 	 * @access public
 	 */
-	public function json_path()
-	{
+	public function json_path() {
 		if ( ! file_exists( LITESPEED_STATIC_DIR . '/crawler/' . $this->_sitemeta ) ) {
 			return false;
 		}
@@ -876,8 +874,7 @@ class Crawler extends Base
 	 * @since    1.1.0
 	 * @access public
 	 */
-	public function reset_pos()
-	{
+	public function reset_pos() {
 		File::save( $this->_resetfile, time() , true );
 	}
 
@@ -887,8 +884,7 @@ class Crawler extends Base
 	 * @since  3.0
 	 * @access public
 	 */
-	public function display_status( $status_row, $reason_set )
-	{
+	public function display_status( $status_row, $reason_set ) {
 		if ( ! $status_row ) {
 			return '';
 		}
@@ -928,8 +924,7 @@ class Crawler extends Base
 	 * @access protected
 	 * @param  string $error Error info
 	 */
-	protected function output($msg)
-	{
+	protected function output($msg) {
 		if ( defined('DOING_CRON') ) {
 			echo $msg;
 			// exit();
@@ -946,8 +941,7 @@ class Crawler extends Base
 	 * @since  3.0
 	 * @access public
 	 */
-	public static function handler()
-	{
+	public static function handler() {
 		$instance = self::get_instance();
 
 		$type = Router::verify_type();

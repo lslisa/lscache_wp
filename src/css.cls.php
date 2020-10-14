@@ -3,19 +3,15 @@
  * The optimize css class.
  *
  * @since      	2.3
- * @package  	LiteSpeed
- * @subpackage 	LiteSpeed/inc
- * @author     	LiteSpeed Technologies <info@litespeedtech.com>
  */
-namespace LiteSpeed ;
+namespace LiteSpeed;
+defined( 'WPINC' ) || exit;
 
-defined( 'WPINC' ) || exit ;
+class CSS extends Base {
+	protected static $_instance;
 
-class CSS extends Base
-{
-	protected static $_instance ;
-
-	const TYPE_GENERATE_CRITICAL = 'generate_critical' ;
+	const TYPE_GENERATE_CRITICAL = 'generate_critical';
+	const TYPE_CLEAR_Q = 'clear_q';
 
 	protected $_summary;
 
@@ -25,8 +21,7 @@ class CSS extends Base
 	 * @since  3.0
 	 * @access protected
 	 */
-	protected function __construct()
-	{
+	protected function __construct() {
 		$this->_summary = self::get_summary();
 	}
 
@@ -37,29 +32,17 @@ class CSS extends Base
 	 * @since  2.3 Migrated from optimize.cls
 	 * @access public
 	 */
-	public static function prepend_ccss( $html_head )
-	{
+	public static function prepend_ccss( $html_head ) {
 		// Get critical css for current page
 		// Note: need to consider mobile
-		$rules = self::get_instance()->_ccss() ;
+		$rules = self::get_instance()->_ccss();
 
 		// Append default critical css
-		$rules .= Conf::val( Base::O_OPTM_CCSS_CON ) ;
+		$rules .= Conf::val( Base::O_OPTM_CCSS_CON );
 
-		$html_head = '<style id="litespeed-optm-css-rules">' . $rules . '</style>' . $html_head ;
+		$html_head = '<style id="litespeed-optm-css-rules">' . $rules . '</style>' . $html_head;
 
-		return $html_head ;
-	}
-
-	/**
-	 * Check if there is a ccss cache folder
-	 *
-	 * @since  2.3
-	 * @access public
-	 */
-	public static function has_ccss_cache()
-	{
-		return is_dir( LITESPEED_STATIC_DIR . '/ccss' ) ;
+		return $html_head;
 	}
 
 	/**
@@ -68,9 +51,8 @@ class CSS extends Base
 	 * @since  2.3
 	 * @access private
 	 */
-	private function _ccss_realpath( $ccss_type )
-	{
-		return LITESPEED_STATIC_DIR . "/ccss/$ccss_type.css" ;
+	private function _ccss_realpath( $ccss_type ) {
+		return LITESPEED_STATIC_DIR . "/ccss/$ccss_type.css";
 	}
 
 	/**
@@ -79,19 +61,24 @@ class CSS extends Base
 	 * @since  2.3
 	 * @access public
 	 */
-	public function rm_cache_folder()
-	{
+	public function rm_cache_folder() {
 		if ( file_exists( LITESPEED_STATIC_DIR . '/ccss' ) ) {
-			File::rrmdir( LITESPEED_STATIC_DIR . '/ccss' ) ;
+			File::rrmdir( LITESPEED_STATIC_DIR . '/ccss' );
 		}
 
 		// Clear CCSS in queue too
-		$this->_summary[ 'queue' ] = array() ;
-		$this->_summary[ 'curr_request' ] = 0 ;
+		$this->_summary[ 'queue' ] = array();
+		$this->_summary[ 'curr_request' ] = 0;
 		self::save_summary();
 
-		Debug2::debug2( '[CSS] Cleared ccss queue' ) ;
+		Debug2::debug2( '[CSS] Cleared ccss queue' );
 	}
+
+
+	public function gen_ucss( $page_url, $ua ) {
+		return $this->_generate_ucss( $page_url, $ua );
+	}
+
 
 	/**
 	 * The critical css content of the current page
@@ -99,50 +86,49 @@ class CSS extends Base
 	 * @since  2.3
 	 * @access private
 	 */
-	private function _ccss()
-	{
+	private function _ccss() {
 		// If don't need to generate CCSS, bypass
 		if ( ! Conf::val( Base::O_OPTM_CCSS_GEN ) ) {
-			Debug2::debug( '[CSS] bypassed ccss due to setting' ) ;
-			return '' ;
+			Debug2::debug( '[CSS] bypassed ccss due to setting' );
+			return '';
 		}
 
-		$ccss_type = $this->_which_css() ;
-		$ccss_file = $this->_ccss_realpath( $ccss_type ) ;
+		$ccss_type = $this->_which_css();
+		$ccss_file = $this->_ccss_realpath( $ccss_type );
 
 		if ( file_exists( $ccss_file ) ) {
-			Debug2::debug2( '[CSS] existing ccss ' . $ccss_file ) ;
-			return File::read( $ccss_file ) ;
+			Debug2::debug2( '[CSS] existing ccss ' . $ccss_file );
+			return File::read( $ccss_file );
 		}
 
 		// Check if is already in a request, bypass current one
-		if ( ! empty( $this->_summary[ 'curr_request' ] ) && time() - $this->_summary[ 'curr_request' ] < 300 ) {
+		if ( ! empty( $this->_summary[ 'curr_request' ] ) && time() - $this->_summary[ 'curr_request' ] < 300 && ! Conf::val( Base::O_DEBUG ) ) {
 			Debug2::debug( '[CCSS] Last request not done' );
-			return '' ;
+			return '';
 		}
 
-		global $wp ;
-		$request_url = home_url( $wp->request ) ;
+		global $wp;
+		$request_url = home_url( $wp->request );
 
 		// If generate in backend, log it and bypass
 		if ( Conf::val( Base::O_OPTM_CCSS_ASYNC ) ) {
 			// Store it to prepare for cron
 			if ( empty( $this->_summary[ 'queue' ] ) ) {
-				$this->_summary[ 'queue' ] = array() ;
+				$this->_summary[ 'queue' ] = array();
 			}
 			$this->_summary[ 'queue' ][ $ccss_type ] = array(
 				'url'			=> $request_url,
 				'user_agent'	=> $_SERVER[ 'HTTP_USER_AGENT' ],
 				'is_mobile'		=> $this->_separate_mobile_ccss(),
-			) ;// Current UA will be used to request
-			Debug2::debug( '[CSS] Added queue [type] ' . $ccss_type . ' [url] ' . $request_url . ' [UA] ' . $_SERVER[ 'HTTP_USER_AGENT' ] ) ;
+			);// Current UA will be used to request
+			Debug2::debug( '[CSS] Added queue [type] ' . $ccss_type . ' [url] ' . $request_url . ' [UA] ' . $_SERVER[ 'HTTP_USER_AGENT' ] );
 
 			self::save_summary();
-			return '' ;
+			return '';
 		}
 
 		// generate on the fly
-		return $this->_generate_ccss( $request_url, $ccss_type, $_SERVER[ 'HTTP_USER_AGENT' ], $this->_separate_mobile_ccss() ) ;
+		return $this->_generate_ccss( $request_url, $ccss_type, $_SERVER[ 'HTTP_USER_AGENT' ], $this->_separate_mobile_ccss() );
 	}
 
 	/**
@@ -153,7 +139,7 @@ class CSS extends Base
 	 */
 	private function _separate_mobile_ccss()
 	{
-		return apply_filters( 'litespeed_is_mobile', false ) && Conf::val( Base::O_CACHE_MOBILE ) ;
+		return ( wp_is_mobile() || apply_filters( 'litespeed_is_mobile', false ) ) && Conf::val( Base::O_CACHE_MOBILE );
 	}
 
 	/**
@@ -166,25 +152,25 @@ class CSS extends Base
 	{
 		$_instance = self::get_instance();
 		if ( empty( $_instance->_summary[ 'queue' ] ) ) {
-			return ;
+			return;
 		}
 
 		// For cron, need to check request interval too
 		if ( ! $continue ) {
 			if ( ! empty( $_instance->_summary[ 'curr_request' ] ) && time() - $_instance->_summary[ 'curr_request' ] < 300 ) {
 				Debug2::debug( '[CCSS] Last request not done' );
-				return ;
+				return;
 			}
 		}
 
 		foreach ( $_instance->_summary[ 'queue' ] as $k => $v ) {
-			Debug2::debug( '[CSS] cron job [type] ' . $k . ' [url] ' . $v[ 'url' ] . ( $v[ 'is_mobile' ] ? ' 📱 ' : '' ) . ' [UA] ' . $v[ 'user_agent' ] ) ;
+			Debug2::debug( '[CSS] cron job [type] ' . $k . ' [url] ' . $v[ 'url' ] . ( $v[ 'is_mobile' ] ? ' 📱 ' : '' ) . ' [UA] ' . $v[ 'user_agent' ] );
 
-			$_instance->_generate_ccss( $v[ 'url' ], $k, $v[ 'user_agent' ], $v[ 'is_mobile' ] ) ;
+			$_instance->_generate_ccss( $v[ 'url' ], $k, $v[ 'user_agent' ], $v[ 'is_mobile' ] );
 
 			// only request first one
 			if ( ! $continue ) {
-				return ;
+				return;
 			}
 		}
 	}
@@ -195,8 +181,7 @@ class CSS extends Base
 	 * @since  2.3
 	 * @access private
 	 */
-	private function _generate_ccss( $request_url, $ccss_type, $user_agent, $is_mobile )
-	{
+	private function _generate_ccss( $request_url, $ccss_type, $user_agent, $is_mobile ) {
 		// Check if has credit to push
 		$allowance = Cloud::get_instance()->allowance( Cloud::SVC_CCSS );
 		if ( ! $allowance ) {
@@ -205,11 +190,25 @@ class CSS extends Base
 			return;
 		}
 
-		$ccss_file = $this->_ccss_realpath( $ccss_type ) ;
+		$ccss_file = $this->_ccss_realpath( $ccss_type );
 
 		// Update css request status
-		$this->_summary[ 'curr_request' ] = time() ;
+		$this->_summary[ 'curr_request' ] = time();
 		self::save_summary();
+
+		// Gather guest HTML to send
+		$html = $this->_prepare_html( $request_url, $user_agent );
+
+		if ( ! $html ) {
+			return false;
+		}
+
+		// Parse HTML to gather all CSS content before requesting
+		list( $css, $html ) = $this->_prepare_css( $html );
+
+		if ( ! $css ) {
+			return false;
+		}
 
 		// Generate critical css
 		$data = array(
@@ -217,38 +216,308 @@ class CSS extends Base
 			'ccss_type'		=> $ccss_type,
 			'user_agent'	=> $user_agent,
 			'is_mobile'		=> $is_mobile ? 1 : 0,
-		) ;
+			'html'			=> $html,
+			'css'			=> $css,
+			'type'			=> 'CCSS',
+		);
 
-		Debug2::debug( '[CSS] Generating: ', $data ) ;
+		Debug2::debug( '[CSS] Generating: ', $data );
 
-		$json = Cloud::post( Cloud::SVC_CCSS, $data, 180 ) ;
+		$json = Cloud::post( Cloud::SVC_CCSS, $data, 30 );
 		if ( ! is_array( $json ) ) {
 			return false;
 		}
 
 		if ( empty( $json[ 'ccss' ] ) ) {
-			Debug2::debug( '[CSS] ❌ empty ccss' ) ;
+			Debug2::debug( '[CSS] ❌ empty ccss' );
 			$this->_popup_and_save( $ccss_type, $request_url );
-			return false ;
+			return false;
 		}
 
 		// Add filters
-		$ccss = apply_filters( 'litespeed_ccss', $json[ 'ccss' ], $ccss_type ) ;
+		$ccss = apply_filters( 'litespeed_ccss', $json[ 'ccss' ], $ccss_type );
 
 		// Write to file
-		File::save( $ccss_file, $ccss, true ) ;
+		File::save( $ccss_file, $ccss, true );
 
 		// Save summary data
-		$this->_summary[ 'last_spent' ] = time() - $this->_summary[ 'curr_request' ] ;
-		$this->_summary[ 'last_request' ] = $this->_summary[ 'curr_request' ] ;
-		$this->_summary[ 'curr_request' ] = 0 ;
+		$this->_summary[ 'last_spent' ] = time() - $this->_summary[ 'curr_request' ];
+		$this->_summary[ 'last_request' ] = $this->_summary[ 'curr_request' ];
+		$this->_summary[ 'curr_request' ] = 0;
 		$this->_popup_and_save( $ccss_type, $request_url );
 
-		Debug2::debug( '[CSS] saved ccss ' . $ccss_file ) ;
+		Debug2::debug( '[CSS] saved ccss ' . $ccss_file );
 
-		Debug2::debug2( '[CSS] ccss con: ' . $ccss ) ;
+		Debug2::debug2( '[CSS] ccss con: ' . $ccss );
 
-		return $ccss ;
+		return $ccss;
+	}
+
+	/**
+	 * Play for fun
+	 *
+	 * @since  3.4.3
+	 */
+	public function test_url( $request_url ) {
+		$user_agent = $_SERVER[ 'HTTP_USER_AGENT' ];
+		$html = $this->_prepare_html( $request_url, $user_agent );
+		list( $css, $html ) = $this->_prepare_css( $html, true );
+		// var_dump( $css );
+// 		$html = <<<EOT
+
+// EOT;
+
+// 		$css = <<<EOT
+
+// EOT;
+		$data = array(
+			'url'			=> $request_url,
+			'ccss_type'		=> 'test',
+			'user_agent'	=> $user_agent,
+			'is_mobile'		=> 0,
+			'html'			=> $html,
+			'css'			=> $css,
+			'type'			=> 'CCSS',
+		);
+
+		// Debug2::debug( '[CSS] Generating: ', $data );
+
+		$json = Cloud::post( Cloud::SVC_CCSS, $data, 180 );
+
+		var_dump($json);
+	}
+
+	/**
+	 * Prepare HTML from URL
+	 *
+	 * @since  3.4.3
+	 */
+	private function _prepare_html( $request_url, $user_agent ) {
+		$html = Crawler::get_instance()->self_curl( add_query_arg( 'LSCWP_CTRL', 'before_optm', $request_url ), $user_agent );
+		Debug2::debug2( '[CSS] self_curl result....', $html );
+
+
+		$html = Optimizer::get_instance()->html_min( $html, true );
+		// Drop <noscript>xxx</noscript>
+		$html = preg_replace( '#<noscript>.*</noscript>#isU', '', $html );
+
+		return $html;
+	}
+
+	/**
+	 * Prepare CSS from HTML
+	 *
+	 * @since  3.4.3
+	 */
+	private function _prepare_css( $html, $dryrun =false ) {
+		$css = '';
+		preg_match_all( '#<link ([^>]+)/?>|<style[^>]*>([^<]+)</style>#isU', $html, $matches, PREG_SET_ORDER );
+		foreach ( $matches as $match ) {
+			$attrs = false;
+			$debug_info = '';
+			if ( strpos( $match[ 0 ], '<link' ) === 0 ) {
+				$attrs = Utility::parse_attr( $match[ 1 ] );
+
+				if ( empty( $attrs[ 'rel' ] ) ) {
+					continue;
+				}
+
+				if ( $attrs[ 'rel' ] != 'stylesheet' ) {
+					if ( $attrs[ 'rel' ] != 'preload' || empty( $attrs[ 'as' ] ) || $attrs[ 'as' ] != 'style' ) {
+						continue;
+					}
+				}
+
+				if ( ! empty( $attrs[ 'media' ] ) && strpos( $attrs[ 'media' ], 'print' ) !== false ) {
+					continue;
+				}
+				if ( empty( $attrs[ 'href' ] ) ) {
+					continue;
+				}
+
+				// Check Google fonts hit
+				if ( strpos( $attrs[ 'href' ], 'fonts.googleapis.com' ) !== false ) {
+					$html = str_replace( $match[ 0 ], '', $html );
+					continue;
+				}
+
+				$debug_info = $attrs[ 'href' ];
+
+				// Load CSS content
+				if ( ! $dryrun ) { // Dryrun will not load CSS but just drop them
+					$con = $this->load_file( $attrs[ 'href' ] );
+					if ( ! $con ) {
+						continue;
+					}
+				}
+				else {
+					$con = '';
+				}
+			}
+			else { // Inline style
+				Debug2::debug2( '[CCSS] Load inline CSS ' . substr( $match[ 2 ], 0, 100 ) . '...' );
+				$con = $match[ 2 ];
+
+				$debug_info = '__INLINE__';
+			}
+
+			$con = Optimizer::minify_css( $con );
+
+			$con = '/* ' . $debug_info . ' */' . $con;
+
+			if ( ! empty( $attrs[ 'media' ] ) && $attrs[ 'media' ] !== 'all' ) {
+				$css .= '@media ' . $attrs[ 'media' ] . '{' . $con . "\n}";
+			}
+			else {
+				$css .= $con . "\n";
+			}
+
+			$html = str_replace( $match[ 0 ], '', $html );
+		}
+
+		return array( $css, $html );
+	}
+
+	/**
+	 * Load remote/local resource
+	 *
+	 * @since  3.5
+	 */
+	public function load_file( $src, $file_type = 'css' ) {
+		$real_file = Utility::is_internal_file( $src );
+		$postfix = pathinfo( parse_url( $src, PHP_URL_PATH ), PATHINFO_EXTENSION );
+		if ( ! $real_file || $postfix != $file_type ) {
+			Debug2::debug2( '[CSS] Load Remote [' . $file_type . '] ' . $src );
+			$this_url = substr( $src, 0, 2 ) == '//' ? set_url_scheme( $src ) : $src;
+			$res = wp_remote_get( $this_url );
+			$res_code = wp_remote_retrieve_response_code( $res );
+			if ( is_wp_error( $res ) || $res_code == 404 ) {
+				Debug2::debug2( '[CSS] ❌ Load Remote error [code] ' . $res_code );
+				return false;
+			}
+			$con = wp_remote_retrieve_body( $res );
+			if ( ! $con ) {
+				return false;
+			}
+
+			if ( $file_type == 'css' ) {
+				$dirname = dirname( $this_url ) . '/';
+
+				$con = Lib\CSS_MIN\UriRewriter::prepend( $con, $dirname );
+			}
+		}
+		else {
+			Debug2::debug2( '[CSS] Load local [' . $file_type . '] ' . $real_file[ 0 ] );
+			$con = File::read( $real_file[ 0 ] );
+
+			if ( $file_type == 'css' ) {
+				$dirname = dirname( $real_file[ 0 ] );
+
+				$con = Lib\CSS_MIN\UriRewriter::rewrite( $con, $dirname );
+			}
+		}
+
+
+		return $con;
+	}
+
+	/**
+	 * Send to QC API to generate UCSS
+	 *
+	 * @since  3.3
+	 * @access private
+	 */
+	private function _generate_ucss( $request_url, $user_agent ) {
+		// Check if has credit to push
+		$allowance = Cloud::get_instance()->allowance( Cloud::SVC_CCSS );
+		if ( ! $allowance ) {
+			Debug2::debug( '[UCSS] ❌ No credit' );
+			Admin_Display::error( Error::msg( 'lack_of_quota' ) );
+			return;
+		}
+
+		// Update UCSS request status
+		$this->_summary[ 'curr_request_ucss' ] = time();
+		self::save_summary();
+
+		// Generate UCSS
+		$data = array(
+			'type'			=> 'UCSS',
+			'url'			=> $request_url,
+			'whitelist'		=> $this->_filter_whitelist(),
+			'user_agent'	=> $user_agent,
+			'is_mobile'		=> $this->_separate_mobile_ccss(),
+		);
+
+		// Append cookie for roles auth
+		if ( $uid = get_current_user_id() ) {
+			// Get role simulation vary name
+			$vary_inst = Vary::get_instance();
+			$vary_name = $vary_inst->get_vary_name();
+			$vary_val = $vary_inst->finalize_default_vary( $uid );
+			$data[ 'cookies' ] = array();
+			$data[ 'cookies' ][ $vary_name ] = $vary_val;
+			$data[ 'cookies' ][ 'litespeed_role' ] = $uid;
+			$data[ 'cookies' ][ 'litespeed_hash' ] = Router::get_hash();
+		}
+
+		Debug2::debug( '[UCSS] Generating UCSS: ', $data );
+
+		$json = Cloud::post( Cloud::SVC_CCSS, $data, 180 );
+		if ( ! is_array( $json ) ) {
+			return false;
+		}
+
+		if ( empty( $json[ 'ucss' ] ) ) {
+			Debug2::debug( '[UCSS] ❌ empty ucss' );
+			// $this->_popup_and_save( $ccss_type, $request_url );
+			return false;
+		}
+
+		$ucss = $json[ 'ucss' ];
+		Debug2::debug2( '[UCSS] ucss con: ' . $ucss );
+
+		if ( substr( $ucss, 0, 2 ) == '/*' && substr( $ucss, -2 ) == '*/' ) {
+			$ucss = '';
+		}
+		// Add filters
+		$ucss = apply_filters( 'litespeed_ucss', $ucss, $request_url );
+
+		// Write to file
+		// File::save( $ucss_file, $ucss, true );
+
+		// Save summary data
+		$this->_summary[ 'last_spent_ucss' ] = time() - $this->_summary[ 'curr_request_ucss' ];
+		$this->_summary[ 'last_request_ucss' ] = $this->_summary[ 'curr_request_ucss' ];
+		$this->_summary[ 'curr_request_ucss' ] = 0;
+		self::save_summary();
+		// $this->_popup_and_save( $ccss_type, $request_url );
+
+		// Debug2::debug( '[UCSS] saved ucss ' . $ucss_file );
+
+		return $ucss;
+	}
+
+	/**
+	 * Filter the comment content, add quotes to selector from whitelist. Return the json
+	 *
+	 * @since 3.3
+	 */
+	private function _filter_whitelist() {
+		$whitelist = array();
+		$val = Conf::val( Base::O_OPTM_UCSS_WHITELIST );
+		foreach ( $val as $k => $v ) {
+			if ( substr( $v, 0, 2 ) === '//' ) {
+				continue;
+			}
+			// Wrap in quotes for selectors
+			if ( substr( $v, 0, 1 ) !== '/' && strpos( $v, '"' ) === false && strpos( $v, "'" ) === false ) {
+				// $v = "'$v'";
+			}
+			$whitelist[] = $v;
+		}
+
+		return $whitelist;
 	}
 
 	/**
@@ -259,12 +528,29 @@ class CSS extends Base
 	private function _popup_and_save( $ccss_type, $request_url )
 	{
 		if ( empty( $this->_summary[ 'ccss_type_history' ] ) ) {
-			$this->_summary[ 'ccss_type_history' ] = array() ;
+			$this->_summary[ 'ccss_type_history' ] = array();
 		}
-		$this->_summary[ 'ccss_type_history' ][ $ccss_type ] = $request_url ;
-		unset( $this->_summary[ 'queue' ][ $ccss_type ] ) ;
+		$this->_summary[ 'ccss_type_history' ][ $ccss_type ] = $request_url;
+		unset( $this->_summary[ 'queue' ][ $ccss_type ] );
 
 		self::save_summary();
+	}
+
+	/**
+	 * Clear all waiting queues
+	 *
+	 * @since  3.4
+	 */
+	public function clear_q() {
+		if ( empty( $this->_summary[ 'queue' ] ) ) {
+			return;
+		}
+
+		$this->_summary[ 'queue' ] = array();
+		self::save_summary();
+
+		$msg = __( 'Queue cleared successfully.', 'litespeed-cache' );
+		Admin_Display::succeed( $msg );
 	}
 
 	/**
@@ -275,35 +561,39 @@ class CSS extends Base
 	 */
 	private function _which_css()
 	{
-		$css = Utility::page_type() ;
+		$css = Utility::page_type();
 
-		$unique = false ;
-
-		// Check if in separate css type option
-		$separate_posttypes = Conf::val( Base::O_OPTM_CCSS_SEP_POSTTYPE ) ;
-		if ( ! empty( $separate_posttypes ) && in_array( $css, $separate_posttypes ) ) {
-			Debug2::debug( '[CSS] Hit separate posttype setting [type] ' . $css ) ;
-			$unique = true ;
+		if ( is_multisite() ) {
+			$css .= '-' . get_current_blog_id();
 		}
 
-		$separate_uri = Conf::val( Base::O_OPTM_CCSS_SEP_URI ) ;
+		$unique = false;
+
+		// Check if in separate css type option
+		$separate_posttypes = Conf::val( Base::O_OPTM_CCSS_SEP_POSTTYPE );
+		if ( ! empty( $separate_posttypes ) && in_array( $css, $separate_posttypes ) ) {
+			Debug2::debug( '[CSS] Hit separate posttype setting [type] ' . $css );
+			$unique = true;
+		}
+
+		$separate_uri = Conf::val( Base::O_OPTM_CCSS_SEP_URI );
 		if ( ! empty( $separate_uri ) ) {
-			$result =  Utility::str_hit_array( $_SERVER[ 'REQUEST_URI' ], $separate_uri ) ;
+			$result =  Utility::str_hit_array( $_SERVER[ 'REQUEST_URI' ], $separate_uri );
 			if ( $result ) {
-				Debug2::debug( '[CSS] Hit separate URI setting: ' . $result ) ;
-				$unique = true ;
+				Debug2::debug( '[CSS] Hit separate URI setting: ' . $result );
+				$unique = true;
 			}
 		}
 
 		if ( $unique ) {
-			$css .= '-' . md5( $_SERVER[ 'REQUEST_URI' ] ) ;
+			$css .= '-' . md5( $_SERVER[ 'REQUEST_URI' ] );
 		}
 
 		if ( $this->_separate_mobile_ccss() ) {
-			$css .= '.mobile' ;
+			$css .= '.mobile';
 		}
 
-		return $css ;
+		return $css;
 	}
 
 	/**
@@ -314,20 +604,24 @@ class CSS extends Base
 	 */
 	public static function handler()
 	{
-		$instance = self::get_instance() ;
+		$instance = self::get_instance();
 
-		$type = Router::verify_type() ;
+		$type = Router::verify_type();
 
 		switch ( $type ) {
 			case self::TYPE_GENERATE_CRITICAL :
-				self::cron_ccss( true ) ;
-				break ;
+				self::cron_ccss( true );
+				break;
+
+			case self::TYPE_CLEAR_Q :
+				$instance->clear_q();
+				break;
 
 			default:
-				break ;
+				break;
 		}
 
-		Admin::redirect() ;
+		Admin::redirect();
 	}
 
 }
